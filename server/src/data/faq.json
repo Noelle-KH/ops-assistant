@@ -1,1 +1,35 @@
-[]
+[
+  {
+    "id": "faq_001",
+    "category": "開戶",
+    "tags": ["開戶", "年齡限制", "審核"],
+    "question": "開戶年齡限制是多大？",
+    "answer": "實際開戶人需要是年滿 18 周歲，最高不超過 70 周歲的公民。",
+    "ops_note": "若客戶年齡接近 70 歲，需提供《IEXS 盈十證券高齡開設帳號申請書》並由合規部門審核。",
+    "answer_en": "The actual account holder must be between 18 and 70 years old.",
+    "linked_sop": "sop_001",
+    "linked_template": "tpl_001",
+    "updated_at": "2026-04-30"
+  },
+  {
+    "id": "faq_002",
+    "category": "出金",
+    "tags": ["出金", "手續費", "時間"],
+    "question": "出金手續費如何計算？",
+    "answer": "IEXS 對於 50 美元（含）以上的出金申請不收取手續費。低於 50 美元將收取 5 美元行政手續費。",
+    "ops_note": "部分代理帳戶可能有特殊約定，請在 OA > 帳戶管理 > 代理設定中確認。",
+    "answer_en": "No fee for withdrawals over $50. A $5 fee applies for withdrawals below $50.",
+    "linked_sop": "sop_003",
+    "updated_at": "2026-05-01"
+  },
+  {
+    "id": "faq_003",
+    "category": "交易帳戶",
+    "tags": ["MT4", "密碼", "重置"],
+    "question": "如何重置 MT4 交易密碼？",
+    "answer": "客戶可以登入官員後台（CRM）點擊『帳戶設置』>『修改交易密碼』進行操作，或聯繫客服申請後台重置。",
+    "ops_note": "人工重置需核對客戶身分資料（身分證末四碼或註冊信箱）。",
+    "answer_en": "Users can reset passwords via the CRM Dashboard or contact support for manual reset.",
+    "updated_at": "2026-05-02"
+  }
+]

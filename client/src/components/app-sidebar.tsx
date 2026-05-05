@@ -5,8 +5,7 @@ import {
   FileText, 
   Mail, 
   Users, 
-  Wrench, 
-  Link2 
+  Wrench
 } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 
@@ -30,7 +29,6 @@ const items = [
   { title: "郵件模板庫", url: "/templates", icon: Mail },
   { title: "群組目錄", url: "/groups", icon: Users },
   { title: "系統工具", url: "/tools", icon: Wrench },
-  { title: "歸屬鏈解析器", url: "/parser", icon: Link2 },
 ]
 
 export function AppSidebar() {
@@ -41,7 +39,7 @@ export function AppSidebar() {
       <SidebarHeader className="border-b h-14 flex items-center px-4">
         <Link to="/" className="flex items-center gap-2">
           <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Link2 className="h-4 w-4" />
+            <Wrench className="h-4 w-4" />
           </div>
           <span className="font-bold text-lg truncate">領航站</span>
         </Link>
