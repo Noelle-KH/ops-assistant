@@ -1,26 +1,43 @@
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { Toaster } from "@/components/ui/sonner"
+
+// Pages
+import Dashboard from "@/pages/dashboard"
+import ParserPage from "@/pages/parser"
 
 function App() {
   return (
-    <TooltipProvider>
-      <SidebarProvider>
-        <AppSidebar />
-        <main className="flex-1 overflow-auto">
-          <div className="p-4 border-b flex items-center gap-4 sticky top-0 bg-background z-10">
-            <SidebarTrigger />
-            <h1 className="text-xl font-bold">Operations Navigator</h1>
-          </div>
-          <div className="p-6">
-            <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">Welcome Back</h2>
-              <p className="text-muted-foreground">Select a tool from the sidebar to get started.</p>
-            </section>
-          </div>
-        </main>
-      </SidebarProvider>
-    </TooltipProvider>
+    <Router>
+      <TooltipProvider>
+        <SidebarProvider>
+          <AppSidebar />
+          <main className="flex-1 overflow-auto bg-slate-50/50 dark:bg-slate-950">
+            <header className="flex h-14 items-center gap-4 border-b bg-background px-6 sticky top-0 z-10">
+              <SidebarTrigger />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-muted-foreground">領航站 / 運營工具</p>
+              </div>
+            </header>
+            <div className="p-6 md:p-8 max-w-7xl mx-auto">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/parser" element={<ParserPage />} />
+                <Route path="*" element={
+                  <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+                    <h2 className="text-2xl font-bold">即將推出</h2>
+                    <p className="text-muted-foreground">此模組正在開發中，敬請期待。</p>
+                  </div>
+                } />
+              </Routes>
+            </div>
+          </main>
+          <Toaster position="top-center" richColors />
+        </SidebarProvider>
+      </TooltipProvider>
+    </Router>
   )
 }
 
