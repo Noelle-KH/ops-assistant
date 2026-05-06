@@ -7,6 +7,9 @@ import { Toaster } from "@/components/ui/sonner"
 // Pages
 import Dashboard from "@/pages/dashboard"
 import ParserPage from "@/pages/parser"
+// import FAQPage from "@/pages/faq" // Removed old import
+// import SOPPage from "@/pages/sop" // Removed old import
+import KnowledgeBasePage from "@/pages/knowledge-base" // Import the new unified page
 
 function App() {
   return (
@@ -25,6 +28,11 @@ function App() {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/parser" element={<ParserPage />} />
+                {/* Unified Knowledge Base Routes */}
+                <Route path="/knowledge-base" element={<KnowledgeBasePage initialTab="faqs" />} /> {/* Default to FAQ tab */}
+                <Route path="/knowledge-base/faq/:id?" element={<KnowledgeBasePage initialTab="faqs" />} />
+                <Route path="/knowledge-base/sop/:id?" element={<KnowledgeBasePage initialTab="sops" />} />
+                {/* Removed old /faq and /sop routes */}
                 <Route path="*" element={
                   <div className="flex flex-col items-center justify-center h-[60vh] text-center">
                     <h2 className="text-2xl font-bold">即將推出</h2>

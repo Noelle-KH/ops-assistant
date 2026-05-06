@@ -15,7 +15,8 @@ const shortcuts = [
     title: "FAQ 知識庫", 
     desc: "快速查找常見問題與標準回覆", 
     icon: FileQuestion, 
-    href: "/faq",
+    href: "/knowledge-base",
+    initialTab: "faqs",
     color: "text-blue-500",
     bg: "bg-blue-500/10"
   },
@@ -23,7 +24,8 @@ const shortcuts = [
     title: "SOP 操作流程", 
     desc: "標準化操作指引與系統路徑", 
     icon: FileText, 
-    href: "/sop",
+    href: "/knowledge-base",
+    initialTab: "sops",
     color: "text-green-500",
     bg: "bg-green-500/10"
   },
@@ -65,7 +67,7 @@ export default function Dashboard() {
             <CardContent>
               <p className="text-xs text-muted-foreground mb-4">{item.desc}</p>
               <Button asChild variant="ghost" size="sm" className="w-full justify-between">
-                <Link to={item.href}>
+                <Link to={item.href} state={{ initialTab: item.initialTab }}>
                   進入模組
                   <ArrowRight className="h-4 w-4" />
                 </Link>

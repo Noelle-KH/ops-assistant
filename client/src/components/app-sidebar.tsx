@@ -1,14 +1,13 @@
 import { 
-  Home, 
-  Search, 
-  FileQuestion, 
-  FileText, 
-  Mail, 
-  Users, 
+  Home,
+  Search,
+  FileQuestion,
+  Mail,
+  Users,
   Wrench
-} from "lucide-react"
-import { Link, useLocation } from "react-router-dom"
+  } from "lucide-react"
 
+  import { Link, useLocation } from "react-router-dom"
 import {
   Sidebar,
   SidebarContent,
@@ -24,8 +23,7 @@ import {
 
 const items = [
   { title: "首頁", url: "/", icon: Home },
-  { title: "FAQ 知識庫", url: "/faq", icon: FileQuestion },
-  { title: "SOP 操作流程", url: "/sop", icon: FileText },
+  { title: "知識庫", url: "/knowledge-base", icon: FileQuestion },
   { title: "郵件模板庫", url: "/templates", icon: Mail },
   { title: "群組目錄", url: "/groups", icon: Users },
   { title: "系統工具", url: "/tools", icon: Wrench },
