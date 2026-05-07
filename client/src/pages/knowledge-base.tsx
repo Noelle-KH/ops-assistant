@@ -1,13 +1,19 @@
-import { useState, useEffect, ReactNode } from "react";
-import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
-import { Search, Info, Globe, ExternalLink, Mail, ChevronRight, FileText, List } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { Search, Info, Globe, ExternalLink, Mail, ChevronRight, BookOpen } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 // --- Interfaces ---
 interface FAQItem {
@@ -18,7 +24,7 @@ interface FAQItem {
   answer: string;
   ops_note?: string;
   answer_en?: string;
-  linked_sop?: string; // Links to SOPs
+  linked_sop?: string;
   linked_template?: string;
   updated_at: string;
 }
@@ -37,15 +43,14 @@ interface SOPItem {
     steps: { step: number; action: string; path?: string }[];
   };
   exceptions: { scenario: string; handling: string }[];
-  linked_faq?: string[]; // Links to FAQs
+  linked_faq?: string[];
   linked_template?: string[];
   updated_at: string;
 }
 
 // --- Constants ---
 const FAQ_CATEGORIES = ["全部", "開戶", "交易帳戶", "入金", "出金", "交易", "代理", "活動"];
-const SOP_CATEGORIES = ["全部", "帳戶管理", "風險管理", "出金", "入金", "交易", "開戶", "其他"];
-const API_BASE_URL = "http://localhost:3001"; // Assuming common base URL
+const API_BASE_URL = "http://localhost:3001";
 
 export default function KnowledgeBasePage() {
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
@@ -53,50 +58,47 @@ export default function KnowledgeBasePage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("全部");
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("faqs"); // 'faqs' or 'sops'
-  const [selectedItem, setSelectedItem] = useState<FAQItem | SOPItem | null>(null);
-  const navigate = useNavigate();
-  const params = useParams<{ id: string }>(); // To potentially handle deep linking via URL params
+  
+  // SOP Dialog State
+  const [activeSop, setActiveSop] = useState<SOPItem | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  const params = useParams<{ id: string }>();
 
-  // Fetch FAQs
+  // Fetch FAQs & SOPs
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/faq`)
-      .then(res => res.json())
-      .then(data => {
-        setFaqs(data);
-        // Pre-select first FAQ if available and on FAQ tab and no specific ID in URL
-        if (data.length > 0 && activeTab === 'faqs' && !params.id) {
-             setSelectedItem(data[0]);
-        } else if (params.id && data.find((item: FAQItem) => item.id === params.id)) {
-             setSelectedItem(data.find((item: FAQItem) => item.id === params.id));
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch FAQs:", err);
-        setLoading(false);
-      });
-  }, [activeTab, params.id]); // Re-fetch or re-process if tab changes or ID in URL changes
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [faqRes, sopRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/faq`),
+          fetch(`${API_BASE_URL}/api/sop`)
+        ]);
+        const faqData = await faqRes.json();
+        const sopData = await sopRes.json();
+        
+        setFaqs(faqData);
+        setSops(sopData);
 
-  // Fetch SOPs
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/api/sop`)
-      .then(res => res.json())
-      .then(data => {
-        setSops(data);
-        // Pre-select first SOP if available and on SOP tab and no specific ID in URL
-        if (data.length > 0 && activeTab === 'sops' && !params.id) {
-             setSelectedItem(data[0]);
-        } else if (params.id && data.find((item: SOPItem) => item.id === params.id)) {
-             setSelectedItem(data.find((item: SOPItem) => item.id === params.id));
+        // Handle direct linking if needed
+        if (params.id) {
+          const foundSop = sopData.find((s: SOPItem) => s.id === params.id);
+          if (foundSop) {
+            setActiveSop(foundSop);
+            setIsDialogOpen(true);
+          }
         }
-      })
-      .catch(err => {
-        console.error("Failed to fetch SOPs:", err);
-      });
-  }, [activeTab, params.id]); // Re-fetch or re-process if tab changes or ID in URL changes
+      } catch (err) {
+        console.error("Failed to fetch data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Filtered lists
+    fetchData();
+  }, [params.id]);
+
+  // Filtered FAQ list
   const filteredFaqs = faqs.filter(faq => {
     const matchesSearch = 
       faq.question.toLowerCase().includes(search.toLowerCase()) ||
@@ -108,395 +110,299 @@ export default function KnowledgeBasePage() {
     return matchesSearch && matchesCategory;
   });
 
-  const filteredSOPs = sops.filter(sop => {
-    const matchesSearch = 
-      sop.title.toLowerCase().includes(search.toLowerCase()) ||
-      sop.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase())) ||
-      sop.rule.description.toLowerCase().includes(search.toLowerCase()) ||
-      sop.operation.steps.some(step => step.action.toLowerCase().includes(search.toLowerCase()));
-
-    const matchesCategory = selectedCategory === "全部" || sop.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
-
-  // Handle category selection change
-  const currentCategories = activeTab === "faqs" ? FAQ_CATEGORIES : SOP_CATEGORIES;
-  const handleCategorySelect = (category: string) => {
-    setSelectedCategory(category);
+  const handleOpenSop = (sopId: string) => {
+    const sop = sops.find(s => s.id === sopId);
+    if (sop) {
+      setActiveSop(sop);
+      setIsDialogOpen(true);
+    }
   };
 
-  // Function to render SOP link from FAQ item
-  const renderSopLinkFromFaq = (sopId?: string) => {
-    if (!sopId) return null;
-    return (
-      <Button asChild variant="link" size="sm" className="px-0 h-auto text-xs">
-        <Link to={`/knowledge-base/sop/${sopId}`}>
-          <ExternalLink className="mr-1.5 h-3 w-3" />
-          查看相關 SOP
-        </Link>
-      </Button>
-    );
-  };
-
-  // Function to render FAQ link from SOP item
-  const renderFaqLinkFromSop = (faqIds?: string[]) => {
-    if (!faqIds || faqIds.length === 0) return null;
-    // For simplicity, link to the first associated FAQ
-    const faqId = faqIds[0]; 
-    return (
-      <Button asChild variant="link" size="sm" className="px-0 h-auto text-xs">
-        <Link to={`/knowledge-base/faq/${faqId}`}>
-          <Info className="mr-1.5 h-3 w-3" />
-          查看相關 FAQ
-        </Link>
-      </Button>
-    );
-  };
-
-  // Render SOP detail view
-  const renderSopDetail = (sop: SOPItem) => {
-    return (
-      <Card className="h-full">
-        <CardHeader>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="font-normal">
-                {sop.category}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                更新於 {sop.updated_at}
-              </span>
-            </div>
-            <span className="font-bold text-lg">{sop.title}</span>
+  // Render SOP Content (Inside Dialog)
+  const renderSopContent = (sop: SOPItem) => (
+    <Tabs defaultValue="rules" className="w-full flex flex-col">
+      <div className="flex justify-center mb-8">
+        <TabsList className="h-11 inline-flex items-center justify-center rounded-lg bg-slate-100 p-1 text-slate-500 w-full max-w-md border border-slate-200/60 shadow-inner">
+          <TabsTrigger value="rules" className="flex-1 rounded-md px-6 py-1.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">規則與條件</TabsTrigger>
+          <TabsTrigger value="operation" className="flex-1 rounded-md px-6 py-1.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">操作步驟</TabsTrigger>
+          <TabsTrigger value="exceptions" className="flex-1 rounded-md px-6 py-1.5 text-xs font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">例外處理</TabsTrigger>
+        </TabsList>
+      </div>
+      
+      <div className="flex-1 overflow-visible">
+        <TabsContent value="rules" className="mt-0 animate-in fade-in duration-300 outline-none space-y-8">
+          <div className="rounded-2xl bg-primary/[0.02] p-8 border border-primary/10 shadow-sm relative overflow-hidden">
+            <div className="absolute -right-6 -top-6 h-32 w-32 bg-primary/[0.04] rounded-full" />
+            <h4 className="text-sm font-black mb-3 flex items-center gap-2 text-primary uppercase tracking-widest">
+              <Info className="h-4 w-4" />
+              核心目標
+            </h4>
+            <p className="text-base text-slate-700 leading-relaxed font-semibold relative z-10">
+              {sop.rule.description}
+            </p>
           </div>
-          <CardDescription>
-            {sop.rule.description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="rules" className="w-full">
-            <TabsList className="mb-6">
-              <TabsTrigger value="rules">規則</TabsTrigger>
-              <TabsTrigger value="operation">OA 操作步驟</TabsTrigger>
-              <TabsTrigger value="exceptions">例外情況</TabsTrigger>
-            </TabsList>
-            <TabsContent value="rules" className="space-y-4">
-              <h3 className="font-semibold">說明</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{sop.rule.description}</p>
-              <h3 className="font-semibold">適用條件</h3>
-              <ul className="list-disc list-inside text-sm text-muted-foreground leading-relaxed marker:text-muted-foreground/70">
-                {sop.rule.conditions.map((cond, index) => <li key={index}>{cond}</li>)}
-              </ul>
-              <h3 className="font-semibold">限制</h3>
-              <ul className="list-disc list-inside text-sm text-muted-foreground leading-relaxed marker:text-muted-foreground/70">
-                {sop.rule.restrictions.map((rest, index) => <li key={index}>{rest}</li>)}
-              </ul>
-            </TabsContent>
-            <TabsContent value="operation" className="space-y-4">
-              <h3 className="font-semibold">操作步驟</h3>
-              <Accordion type="single" collapsible className="w-full">
-                {sop.operation.steps.map(step => (
-                  <AccordionItem key={step.step} value={`step-${step.step}`} className="border-b px-0">
-                    <AccordionTrigger className="py-3 font-medium text-left text-base hover:no-underline">
-                      <div className="flex items-center gap-2">
-                        <span className="text-primary font-bold">Step {step.step}:</span>
-                        <span>{step.action}</span>
-                      </div>
-                    </AccordionTrigger>
-                    {step.path && (
-                      <AccordionContent className="pb-4 pt-0">
-                        <div className="p-3 rounded-md bg-primary/5 border border-primary/20 font-mono text-sm text-primary flex items-center gap-2">
-                          <ChevronRight className="h-4 w-4" />
-                          <code>{step.path}</code>
-                        </div>
-                      </AccordionContent>
-                    )}
-                  </AccordionItem>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <h4 className="text-xs font-black flex items-center gap-2 px-1 text-slate-800 uppercase tracking-[0.2em]">
+                <div className="h-1 w-3 rounded-full bg-primary" />
+                適用條件
+              </h4>
+              <ul className="space-y-3">
+                {sop.rule.conditions.map((cond, i) => (
+                  <li key={i} className="text-sm text-slate-600 flex items-start gap-3 bg-slate-50/50 p-4 rounded-xl border border-slate-100/80 shadow-sm">
+                    <div className="h-5 w-5 rounded-full bg-white text-primary flex items-center justify-center shrink-0 mt-0.5 border border-slate-100">
+                      <ChevronRight className="h-3 w-3" />
+                    </div>
+                    <span className="leading-relaxed font-medium">{cond}</span>
+                  </li>
                 ))}
-              </Accordion>
-            </TabsContent>
-            <TabsContent value="exceptions" className="space-y-4">
-              <h3 className="font-semibold">例外情況處理</h3>
-              {sop.exceptions.length > 0 ? (
-                <ul className="list-disc list-inside text-sm text-muted-foreground leading-relaxed">
-                  {sop.exceptions.map((exc, index) => (
-                    <li key={index}>
-                      <span className="font-medium text-foreground">情境：</span>{exc.scenario}<br/>
-                      <span className="font-medium text-foreground">處理方式：</span>{exc.handling}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">本 SOP 無已知例外情況。</p>
-              )}
-            </TabsContent>
-          </Tabs>
+              </ul>
+            </div>
+            <div className="space-y-4">
+              <h4 className="text-xs font-black flex items-center gap-2 px-1 text-red-700 uppercase tracking-[0.2em]">
+                <div className="h-1 w-3 rounded-full bg-red-500" />
+                操作限制
+              </h4>
+              <div className="rounded-xl border border-red-100/60 bg-red-50/20 p-5 space-y-3 shadow-sm">
+                {sop.rule.restrictions.map((rest, i) => (
+                  <div key={i} className="text-sm text-red-800/70 flex items-start gap-3">
+                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-red-400 shrink-0" />
+                    <span className="font-semibold leading-relaxed">{rest}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
 
-          {(sop.linked_faq || sop.linked_template) && (
-            <div className="flex flex-wrap gap-3 pt-4 mt-4 border-t">
-              {renderFaqLinkFromSop(sop.linked_faq)}
-              {sop.linked_template && (
-                <Button asChild variant="link" size="sm" className="px-0 h-auto text-xs text-purple-600">
-                  <Link to={`/templates?id=${sop.linked_template[0]}`}> {/* Assuming templates are also linked by ID */}
-                    <Mail className="mr-1.5 h-3 w-3" />
-                    使用對應模板
-                  </Link>
-                </Button>
-              )}
+        <TabsContent value="operation" className="mt-0 animate-in fade-in duration-300 outline-none">
+          <div className="bg-slate-50/40 p-8 rounded-[2.5rem] border border-slate-100 shadow-inner">
+            <div className="space-y-0">
+              {sop.operation.steps.map((step) => (
+                <div key={step.step} className="group relative pl-16 pb-12 last:pb-0">
+                  {/* Precise Timeline Line */}
+                  <div className="absolute left-[19px] top-2 bottom-0 w-[2px] bg-slate-200 group-last:hidden" />
+                  
+                  {/* Precise Timeline Dot (w-10 = 40px, center = 20px) */}
+                  <div className="absolute left-0 top-0 h-10 w-10 rounded-full border-4 border-white bg-primary text-white flex items-center justify-center z-10 shadow-md group-hover:scale-110 transition-transform duration-300">
+                    <span className="text-sm font-black">{step.step}</span>
+                  </div>
+                  
+                  <div className="space-y-4 pt-1.5">
+                    <p className="text-lg font-extrabold text-slate-900 leading-tight group-hover:text-primary transition-colors">
+                      {step.action}
+                    </p>
+                    {step.path && (
+                      <div className="rounded-xl bg-white p-4 border border-slate-200/80 font-mono text-sm flex items-center gap-3 shadow-sm group-hover:border-primary/30 transition-all overflow-x-auto no-scrollbar whitespace-nowrap">
+                        <div className="flex items-center gap-1 shrink-0 px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                          Path
+                        </div>
+                        <code className="text-primary font-bold">{step.path}</code>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="exceptions" className="mt-0 animate-in fade-in duration-300 outline-none space-y-6">
+          {sop.exceptions.length > 0 ? (
+            sop.exceptions.map((exc, i) => (
+              <div key={i} className="rounded-2xl border border-orange-100 bg-orange-50/20 p-6 space-y-5 hover:border-orange-200 transition-all shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="h-6 px-2 rounded bg-orange-100 text-orange-700 text-[10px] font-black uppercase flex items-center">Scenario {i + 1}</div>
+                  <p className="text-base font-black text-orange-950">{exc.scenario}</p>
+                </div>
+                <div className="bg-white p-5 rounded-xl border border-orange-100/50 shadow-sm flex gap-4">
+                  <div className="flex flex-col items-center gap-1 shrink-0">
+                    <div className="w-1 flex-1 bg-orange-100 rounded-full" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">建議處理方式</p>
+                    <p className="text-sm text-slate-700 leading-relaxed font-semibold">
+                      {exc.handling}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-slate-200 rounded-3xl space-y-4">
+              <Info className="h-10 w-10 text-slate-100" />
+              <p className="text-sm text-slate-400 font-medium italic">目前無已知例外情況</p>
             </div>
           )}
-        </CardContent>
-      </Card>
-    );
-  };
-
-  // Render FAQ detail view
-  const renderFaqDetail = (faq: FAQItem) => {
-    return (
-      <AccordionItem 
-        key={faq.id} 
-        value={faq.id}
-        className="border rounded-lg px-4 bg-background hover:bg-slate-50/50 transition-colors"
-      >
-        <AccordionTrigger className="hover:no-underline py-4 text-left">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="font-normal">
-                {faq.category}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                更新於 {faq.updated_at}
-              </span>
-            </div>
-            <span className="font-semibold text-base">{faq.question}</span>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="pb-4 pt-0 space-y-4">
-          <div className="p-4 rounded-md bg-slate-50 dark:bg-slate-900 border text-sm leading-relaxed whitespace-pre-wrap">
-            {faq.answer}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {faq.tags.map(tag => (
-              <Badge key={tag} variant="outline" className="text-[10px] px-2 py-0">
-                #{tag}
-              </Badge>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            {faq.ops_note && (
-              <Card className="bg-orange-50/30 border-orange-200/50">
-                <CardContent className="p-3">
-                  <div className="flex items-start gap-2">
-                    <Info className="h-4 w-4 text-orange-500 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="text-xs font-bold text-orange-700">運營備注</p>
-                      <p className="text-xs text-orange-600/90 leading-relaxed">
-                        {faq.ops_note}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {faq.answer_en && (
-              <Card className="bg-blue-50/30 border-blue-200/50">
-                <CardContent className="p-3">
-                  <div className="flex items-start gap-2">
-                    <Globe className="h-4 w-4 text-blue-500 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="text-xs font-bold text-blue-700">英文回覆</p>
-                      <p className="text-xs text-blue-600/90 leading-relaxed italic">
-                        {faq.answer_en}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          {(faq.linked_sop || faq.linked_template) && (
-            <div className="flex gap-3 pt-2 border-t mt-4">
-              {renderSopLinkFromFaq(faq.linked_sop)}
-              {faq.linked_template && (
-                <Button asChild variant="link" size="sm" className="px-0 h-auto text-xs text-purple-600">
-                  <Link to={`/templates?id=${faq.linked_template}`}> {/* Assuming templates are linked by ID */}
-                    <Mail className="mr-1.5 h-3 w-3" />
-                    使用對應模板
-                  </Link>
-                </Button>
-              )}
-            </div>
-          )}
-        </AccordionContent>
-      </AccordionItem>
-    );
-  };
-
-  // Render list items based on active tab
-  const renderListItems = () => {
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center h-40">
-          <p className="text-muted-foreground animate-pulse">載入中...</p>
-        </div>
-      );
-    }
-    
-    const listToRender = activeTab === "faqs" ? filteredFaqs : filteredSOPs;
-    const emptyMessage = activeTab === "faqs" 
-      ? "查無符合結果，請嘗試其他關鍵字。" 
-      : "查無符合結果，請嘗試其他關鍵字。";
-
-    if (listToRender.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-muted-foreground">{emptyMessage}</p>
-        </div>
-      );
-    }
-
-    if (activeTab === "faqs") {
-      return (
-        <Accordion type="single" collapsible className="w-full space-y-4">
-          {listToRender.map((item) => renderFaqDetail(item as FAQItem))}
-        </Accordion>
-      );
-    } else { // activeTab === "sops"
-      return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {listToRender.map((item) => {
-            const sop = item as SOPItem;
-            return (
-              <Card 
-                key={sop.id} 
-                className={`hover:shadow-md transition-shadow flex flex-col cursor-pointer ${selectedItem?.id === sop.id ? 'border-primary ring-2 ring-primary' : ''}`}
-                onClick={() => handleItemSelect(sop)}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <Badge variant="outline" className="font-normal text-xs px-2 py-0">
-                      {sop.category}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      更新於 {sop.updated_at}
-                    </span>
-                  </div>
-                  <CardTitle className="text-base leading-relaxed mt-2">{sop.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col justify-between space-y-4">
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                    {sop.rule.description}
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {sop.tags.map(tag => (
-                      <Badge key={tag} variant="outline" className="text-[10px] px-2 py-0">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex justify-end">
-                    <Button asChild variant="link" size="sm" className="px-0 h-auto text-xs">
-                      <Link to={`/knowledge-base/sop/${sop.id}`}>
-                        查看詳情
-                        <ExternalLink className="ml-1 h-3 w-3" />
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      );
-    }
-  };
+        </TabsContent>
+      </div>
+    </Tabs>
+  );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] gap-6">
+    <div className="max-w-5xl mx-auto flex flex-col h-[calc(100vh-8rem)] gap-6">
       <div className="flex flex-col gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">知識庫</h2>
-          <p className="text-muted-foreground">查找標準回覆、運營備注與關聯流程。</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">知識庫</h2>
+            <p className="text-muted-foreground text-sm">查找標準回覆、運營備注與關聯流程。</p>
+          </div>
+          <BookOpen className="h-10 w-10 text-slate-100" />
         </div>
 
-        <Tabs defaultValue={activeTab} className="w-full" onValueChange={(value) => setActiveTab(value as 'faqs' | 'sops')}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="faqs">FAQ</TabsTrigger>
-            <TabsTrigger value="sops">SOP</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="faqs" className="m-0 p-0">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              <div className="relative flex-1 w-full">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜尋 FAQ 問題、內容或標籤..."
-                  className="pl-10 h-10"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-                {currentCategories.map(category => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? "default" : "outline"}
-                    size="sm"
-                    className="whitespace-nowrap"
-                    onClick={() => handleCategorySelect(category)}
-                  >
-                    {category}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <ScrollArea className="flex-1 rounded-md border bg-card mt-6 h-[calc(100vh-18rem)]">
-              <div className="p-6">
-                {renderListItems()}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-
-          <TabsContent value="sops" className="m-0 p-0">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              <div className="relative flex-1 w-full">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜尋 SOP 標題、標籤或關鍵字..."
-                  className="pl-10 h-10"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-                {currentCategories.map(category => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? "default" : "outline"}
-                    size="sm"
-                    className="whitespace-nowrap"
-                    onClick={() => handleCategorySelect(category)}
-                  >
-                    {category}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <ScrollArea className="flex-1 rounded-md border bg-card mt-6 h-[calc(100vh-18rem)]">
-              <div className="p-6">
-                {renderListItems()}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
+        <div className="flex flex-col md:flex-row gap-4 items-center">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="搜尋問題、內容或標籤..."
+              className="pl-10 h-11 bg-white shadow-sm border-slate-200 focus:border-primary"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+            {FAQ_CATEGORIES.map(category => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? "default" : "outline"}
+                size="sm"
+                className="whitespace-nowrap rounded-full px-4 h-9 font-bold"
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
-      {/* Detail view area - currently handled by navigation to sub-routes */}
-      {/* If a detail view is needed on the same page, it would be rendered here based on selectedItem */}
+
+      <ScrollArea className="flex-1 rounded-2xl border bg-white shadow-sm overflow-hidden">
+        <div className="p-6">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              <p className="text-sm text-muted-foreground">載入資料中...</p>
+            </div>
+          ) : filteredFaqs.length > 0 ? (
+            <Accordion type="single" collapsible className="w-full space-y-4">
+              {filteredFaqs.map((faq) => (
+                <AccordionItem
+                  key={faq.id}
+                  value={faq.id}
+                  className="border rounded-xl px-6 bg-background hover:bg-slate-50/40 transition-all overflow-hidden"
+                >
+                  <AccordionTrigger className="hover:no-underline py-6 text-left">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="font-bold text-[10px] px-1.5 h-5 uppercase tracking-wider">
+                          {faq.category}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground font-medium">
+                          最後更新：{faq.updated_at}
+                        </span>
+                      </div>
+                      <span className="font-bold text-lg leading-snug text-slate-900">{faq.question}</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-8 pt-2 space-y-6">
+                    <div className="p-6 rounded-xl bg-slate-50 border border-slate-100 text-base leading-relaxed whitespace-pre-wrap text-slate-700 font-medium">
+                      {faq.answer}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {faq.ops_note && (
+                        <div className="p-4 rounded-xl bg-orange-50/50 border border-orange-100 flex gap-3 shadow-sm">
+                          <Info className="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-black text-orange-700 uppercase tracking-widest">運營備注</p>
+                            <p className="text-sm text-orange-800/90 leading-relaxed">{faq.ops_note}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {faq.answer_en && (
+                        <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 flex gap-3 shadow-sm">
+                          <Globe className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest">English Reply</p>
+                            <p className="text-sm text-blue-800/90 leading-relaxed italic">{faq.answer_en}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {faq.tags.map(tag => (
+                        <Badge key={tag} variant="outline" className="text-[10px] font-normal text-slate-400 rounded-md">
+                          #{tag}
+                        </Badge>
+                      ))}
+                    </div>
+
+                    {(faq.linked_sop || faq.linked_template) && (
+                      <div className="flex items-center gap-4 pt-6 border-t border-slate-100">
+                        {faq.linked_sop && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="h-9 px-4 font-bold shadow-md shadow-primary/20"
+                            onClick={() => handleOpenSop(faq.linked_sop!)}
+                          >
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            查看操作 SOP
+                          </Button>
+                        )}
+                        {faq.linked_template && (
+                          <Button variant="outline" size="sm" className="h-9 px-4 font-bold border-purple-200 text-purple-700 hover:bg-purple-50">
+                            <Mail className="mr-2 h-4 w-4" />
+                            使用郵件模板
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-32 text-center space-y-4">
+              <Search className="h-12 w-12 text-slate-100" />
+              <div className="space-y-1">
+                <p className="text-slate-500 font-bold">查無符合結果</p>
+                <p className="text-xs text-slate-400">請嘗試更換搜尋關鍵字或分類</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* SOP Detailed Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-8 rounded-2xl">
+          {activeSop && (
+            <>
+              <DialogHeader className="space-y-4 pr-6">
+                <div className="flex items-center gap-3">
+                  <Badge className="bg-primary/10 text-primary border-none px-2 h-6 text-[10px] font-bold">
+                    SOP: {activeSop.category}
+                  </Badge>
+                  <span className="text-[10px] font-medium text-slate-400">
+                    最後更新：{activeSop.updated_at}
+                  </span>
+                </div>
+                <DialogTitle className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
+                  {activeSop.title}
+                </DialogTitle>
+                <DialogDescription className="text-base text-slate-500 leading-relaxed">
+                  請遵循以下標準流程進行操作。如遇到例外情境，請優先參考「例外處理」分頁。
+                </DialogDescription>
+              </DialogHeader>
+              {renderSopContent(activeSop)}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

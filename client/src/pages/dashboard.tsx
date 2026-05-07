@@ -1,7 +1,7 @@
 import { 
   FileQuestion, 
-  FileText, 
   Mail, 
+  Users,
   Wrench, 
   ArrowRight 
 } from "lucide-react"
@@ -12,22 +12,12 @@ import { ChainParser } from "@/components/chain-parser"
 
 const shortcuts = [
   { 
-    title: "FAQ 知識庫", 
-    desc: "快速查找常見問題與標準回覆", 
+    title: "知識庫", 
+    desc: "查找標準回覆、運營備注與 SOP 流程", 
     icon: FileQuestion, 
     href: "/knowledge-base",
-    initialTab: "faqs",
     color: "text-blue-500",
     bg: "bg-blue-500/10"
-  },
-  { 
-    title: "SOP 操作流程", 
-    desc: "標準化操作指引與系統路徑", 
-    icon: FileText, 
-    href: "/knowledge-base",
-    initialTab: "sops",
-    color: "text-green-500",
-    bg: "bg-green-500/10"
   },
   { 
     title: "郵件模板庫", 
@@ -36,6 +26,14 @@ const shortcuts = [
     href: "/templates",
     color: "text-purple-500",
     bg: "bg-purple-500/10"
+  },
+  { 
+    title: "群組目錄", 
+    desc: "查找部門聯絡人與主要溝通頻道", 
+    icon: Users, 
+    href: "/groups",
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10"
   },
   { 
     title: "系統工具", 
