@@ -19,22 +19,20 @@ const readJsonFile = (fileName: string) => {
 };
 
 router.get('/faq', (req, res) => {
-  const knowledgeBaseData = readJsonFile('knowledge-base.json');
-  if (knowledgeBaseData && Array.isArray(knowledgeBaseData)) {
-    const faqs = knowledgeBaseData.filter((item: any) => item.type === 'faq');
-    res.json(faqs);
+  const data = readJsonFile('faq.json');
+  if (data) {
+    res.json(data);
   } else {
-    res.status(500).json({ error: 'Failed to read knowledge base data or data is not an array' });
+    res.status(500).json({ error: 'Failed to read FAQ data' });
   }
 });
 
 router.get('/sop', (req, res) => {
-  const knowledgeBaseData = readJsonFile('knowledge-base.json');
-  if (knowledgeBaseData && Array.isArray(knowledgeBaseData)) {
-    const sops = knowledgeBaseData.filter((item: any) => item.type === 'sop');
-    res.json(sops);
+  const data = readJsonFile('sop.json');
+  if (data) {
+    res.json(data);
   } else {
-    res.status(500).json({ error: 'Failed to read knowledge base data or data is not an array' });
+    res.status(500).json({ error: 'Failed to read SOP data' });
   }
 });
 
