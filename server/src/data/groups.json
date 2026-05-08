@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "id": "grp_001",
+    "division": "運營",
+    "name": "OPST (運營核心群)",
+    "purpose": "運營主要溝通群，銷售/客戶、CRM、渠道等各路疑難雜症與特殊申請反饋",
+    "use_cases": ["CRM 問題", "特殊申請", "週/月報"],
+    "contacts": ["Hank", "Folca"],
+    "notes": "重要問題請標註 (At) 負責人"
+  },
+  {
+    "id": "grp_002",
+    "division": "金流",
+    "name": "IEXS 金流對接群",
+    "purpose": "處理入金未到帳、出金延遲、通道異常等資金相關問題",
+    "use_cases": ["入金諮詢", "出金進度", "加急處理"],
+    "contacts": ["財務部 - Sunny", "運營 - Hank"],
+    "notes": "需提供正確的交易單號與 MT4 帳號"
+  },
+  {
+    "id": "grp_003",
+    "division": "產品",
+    "name": "產品研發聯絡",
+    "purpose": "回報系統 Bug、新功能建議、官網顯示異常",
+    "use_cases": ["Bug 回報", "優化建議"],
+    "contacts": ["技術部 - Eric"],
+    "notes": ""
+  },
+  {
+    "id": "grp_004",
+    "division": "機器人",
+    "name": "自動化與 Bot 支援",
+    "purpose": "維護與更新 TG 機器人、自動化通知工具",
+    "use_cases": ["Bot 異常", "功能更新"],
+    "contacts": ["技術組"],
+    "notes": ""
+  }
+]
