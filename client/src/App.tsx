@@ -12,40 +12,61 @@ import TemplatesPage from "@/pages/templates"
 import GroupsPage from "@/pages/groups"
 import ToolsPage from "@/pages/tools"
 
+// Admin Pages
+import AdminLoginPage from "@/pages/admin/login"
+import AdminDashboardPage from "@/pages/admin/dashboard"
+import AdminFaqPage from "@/pages/admin/faq"
+import AdminSopPage from "@/pages/admin/sop"
+import AdminTemplatesPage from "@/pages/admin/templates"
+import AdminUsersPage from "@/pages/admin/users"
+import AdminAuditPage from "@/pages/admin/audit"
+import { AdminLayout } from "@/components/admin-layout"
+
 function App() {
   return (
     <Router>
       <TooltipProvider>
-        <SidebarProvider>
-          <AppSidebar />
-          <main className="flex-1 overflow-auto bg-slate-50/50 dark:bg-slate-950">
-            <header className="flex h-14 items-center gap-4 border-b bg-background px-6 sticky top-0 z-10">
-              <SidebarTrigger />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-muted-foreground">領航站 / 運營工具</p>
-              </div>
-            </header>
-            <div className="p-6 md:p-8 max-w-7xl mx-auto">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/parser" element={<ParserPage />} />
-                <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
-                <Route path="/knowledge-base/faq/:id?" element={<KnowledgeBasePage />} />
-                <Route path="/knowledge-base/sop/:id?" element={<KnowledgeBasePage />} />
-                <Route path="/templates" element={<TemplatesPage />} />
-                <Route path="/groups" element={<GroupsPage />} />
-                <Route path="/tools" element={<ToolsPage />} />
-                <Route path="*" element={
-                  <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-                    <h2 className="text-2xl font-bold">即將推出</h2>
-                    <p className="text-muted-foreground">此模組正在開發中，敬請期待。</p>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          
+          <Route path="/*" element={
+            <SidebarProvider>
+              <AppSidebar />
+              <main className="flex-1 overflow-auto bg-slate-50/50 dark:bg-slate-950">
+                <header className="flex h-14 items-center gap-4 border-b bg-background px-6 sticky top-0 z-10">
+                  <SidebarTrigger />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-muted-foreground">領航站 / 運營工具</p>
                   </div>
-                } />
-              </Routes>
-            </div>
-          </main>
-          <Toaster position="top-center" richColors />
-        </SidebarProvider>
+                </header>
+                <div className="p-6 md:p-8 max-w-7xl mx-auto">
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/parser" element={<ParserPage />} />
+                    <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
+                    <Route path="/knowledge-base/faq/:id?" element={<KnowledgeBasePage />} />
+                    <Route path="/knowledge-base/sop/:id?" element={<KnowledgeBasePage />} />
+                    <Route path="/templates" element={<TemplatesPage />} />
+                    <Route path="/groups" element={<GroupsPage />} />
+                    <Route path="/tools" element={<ToolsPage />} />
+                  </Routes>
+                </div>
+              </main>
+              <Toaster position="top-center" richColors />
+            </SidebarProvider>
+          } />
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="dashboard" element={<AdminDashboardPage />} />
+            <Route path="faq" element={<AdminFaqPage />} />
+            <Route path="sop" element={<AdminSopPage />} />
+            <Route path="templates" element={<AdminTemplatesPage />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="audit" element={<AdminAuditPage />} />
+          </Route>
+        </Routes>
       </TooltipProvider>
     </Router>
   )

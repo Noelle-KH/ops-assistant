@@ -18,8 +18,9 @@
     },
     "exceptions": [],
     "linked_faq": ["faq_001"],
-    "linked_template": "tpl_002",
-    "updated_at": "2026-05-05"
+    "linked_template": ["tpl_002"],
+    "updated_at": "2026-05-05",
+    "status": "active"
   },
   {
     "id": "sop_003",
@@ -44,7 +45,8 @@
         {"scenario": "發現異常出金請求", "handling": "轉交風險管理部門處理"}
     ],
     "linked_faq": ["faq_002"],
-    "linked_template": "tpl_003",
-    "updated_at": "2026-05-03"
+    "linked_template": ["tpl_003"],
+    "updated_at": "2026-05-03",
+    "status": "active"
   }
 ]

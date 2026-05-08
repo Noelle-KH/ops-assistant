@@ -2,7 +2,11 @@
   {
     "id": "tpl_001",
     "category": "取款類",
-    "tags": ["取款", "安撫", "進度"],
+    "tags": [
+      "取款",
+      "安撫",
+      "進度"
+    ],
     "title": "取款進度回覆",
     "variants": [
       {
@@ -21,12 +25,16 @@
       }
     ],
     "linked_faq": "faq_002",
-    "updated_at": "2026-04-30"
+    "updated_at": "2026-04-30",
+    "status": "active"
   },
   {
     "id": "tpl_002",
     "category": "帳戶變更類",
-    "tags": ["負餘額", "修復"],
+    "tags": [
+      "負餘額",
+      "修復"
+    ],
     "title": "負餘額保護修復通知",
     "variants": [
       {
@@ -35,18 +43,31 @@
         "description": "適用於已完成負餘額修復的帳戶",
         "body": "您好！您的申請已通過，帳戶 {{MT4_ACCOUNT}} 產生的負餘額 {{AMOUNT}} USD 已補正。現在該帳戶已可以正常進行交易或入金操作。祝您交易愉快！",
         "fields": [
-          { "key": "MT4_ACCOUNT", "label": "MT4 帳戶號碼", "placeholder": "如：5012345" },
-          { "key": "AMOUNT", "label": "負餘額金額", "placeholder": "如：123.45" }
+          {
+            "key": "MT4_ACCOUNT",
+            "label": "MT4 帳戶號碼",
+            "placeholder": "如：5012345"
+          },
+          {
+            "key": "AMOUNT",
+            "label": "負餘額金額",
+            "placeholder": "如：123.45"
+          }
         ]
       }
     ],
     "linked_sop": "sop_001",
-    "updated_at": "2026-05-01"
+    "updated_at": "2026-05-01",
+    "status": "active"
   },
   {
     "id": "tpl_003",
     "category": "開戶類",
-    "tags": ["身分證", "模糊", "重新上傳"],
+    "tags": [
+      "身分證",
+      "模糊",
+      "重新上傳"
+    ],
     "title": "證件上傳不清晰通知",
     "variants": [
       {
@@ -55,10 +76,15 @@
         "description": "提醒客戶重新拍攝清晰的證件",
         "body": "您好！我們在審核您的開戶申請時發現，您上傳的 {{DOC_TYPE}} 影像不夠清晰（有反光或解析度不足），導致無法辨識關鍵資料。請您重新拍攝並上傳清晰的影像以便我們繼續處理您的申請。謝謝！",
         "fields": [
-          { "key": "DOC_TYPE", "label": "證件類型", "placeholder": "如：身分證正面" }
+          {
+            "key": "DOC_TYPE",
+            "label": "證件類型",
+            "placeholder": "如：身分證正面"
+          }
         ]
       }
     ],
-    "updated_at": "2026-05-02"
+    "updated_at": "2026-05-02",
+    "status": "active"
   }
 ]

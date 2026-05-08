@@ -32,6 +32,7 @@ interface EmailTemplate {
   linked_faq?: string;
   linked_sop?: string;
   updated_at: string;
+  status: "active" | "disabled";
 }
 
 const CATEGORIES = ["全部", "取款類", "帳戶變更類", "開戶類", "審查類", "其他"];
@@ -60,6 +61,7 @@ export default function TemplatesPage() {
   }, []);
 
   const filteredTemplates = templates.filter(tpl => {
+    if (tpl.status === "disabled") return false;
     const matchesSearch = 
       tpl.title.toLowerCase().includes(search.toLowerCase()) ||
       tpl.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()));

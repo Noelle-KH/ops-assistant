@@ -1,0 +1,29 @@
+[
+  {
+    "id": "u_001",
+    "username": "admin",
+    "displayName": "系統管理員",
+    "role": "admin",
+    "status": "active",
+    "lastLogin": "2026-05-08T10:00:00Z",
+    "createdAt": "2026-04-30"
+  },
+  {
+    "id": "u_002",
+    "username": "hank_ops",
+    "displayName": "Hank (高級運營)",
+    "role": "high_level",
+    "status": "active",
+    "lastLogin": "2026-05-07T15:30:00Z",
+    "createdAt": "2026-05-01"
+  },
+  {
+    "id": "u_003",
+    "username": "folca_ops",
+    "displayName": "Folca (一般運營)",
+    "role": "operator",
+    "status": "active",
+    "lastLogin": "2026-05-08T09:15:00Z",
+    "createdAt": "2026-05-01"
+  }
+]

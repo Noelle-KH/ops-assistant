@@ -46,6 +46,7 @@ interface SOPItem {
   linked_faq?: string[];
   linked_template?: string[];
   updated_at: string;
+  status: "active" | "disabled";
 }
 
 // --- Constants ---
@@ -78,11 +79,13 @@ export default function KnowledgeBasePage() {
         const sopData = await sopRes.json();
         
         setFaqs(faqData);
-        setSops(sopData);
+        // Only keep active SOPs for normal users
+        const activeSops = sopData.filter((s: SOPItem) => s.status !== "disabled");
+        setSops(activeSops);
 
         // Handle direct linking if needed
         if (params.id) {
-          const foundSop = sopData.find((s: SOPItem) => s.id === params.id);
+          const foundSop = activeSops.find((s: SOPItem) => s.id === params.id);
           if (foundSop) {
             setActiveSop(foundSop);
             setIsDialogOpen(true);
@@ -100,6 +103,7 @@ export default function KnowledgeBasePage() {
 
   // Filtered FAQ list
   const filteredFaqs = faqs.filter(faq => {
+    if (faq.status === "disabled") return false;
     const matchesSearch = 
       faq.question.toLowerCase().includes(search.toLowerCase()) ||
       faq.answer.toLowerCase().includes(search.toLowerCase()) ||
@@ -111,7 +115,7 @@ export default function KnowledgeBasePage() {
   });
 
   const handleOpenSop = (sopId: string) => {
-    const sop = sops.find(s => s.id === sopId);
+    const sop = sops.find(s => s.id === sopId && s.status !== "disabled");
     if (sop) {
       setActiveSop(sop);
       setIsDialogOpen(true);
