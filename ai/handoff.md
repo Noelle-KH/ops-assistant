@@ -1,41 +1,37 @@
 # Project Handoff: Operations Navigator (運營領航站)
 
 ## 1. 今日完成事項 (Completed Today)
+- **資料庫實體遷移 (重要進度)**:
+  - 成功從靜態 JSON 檔案轉向 **SQLite + Drizzle ORM** 架構。
+  - 實作資料庫 Schema 定義，包含 FAQ、SOP、公告、模板、使用者、稽核日誌等 8 張表。
+  - 編寫並執行 `migrate_json_to_db.ts` 腳本，完整遷移所有現有資料。
+  - 重構後端 `api.ts` 與 `admin.ts` 路由，全面改用 SQL 查詢取代檔案讀寫，支援事務 (Transaction) 級別的批量更新。
+- **公告管理功能 (前端) 完整實作**:
+  - 實作公告列表、CRUD 編輯彈窗、狀態切換與搜尋過濾功能。
+  - 同步更新管理者儀表板與前台展示邏輯。
 - **郵件模板功能 (前端) 深度優化**:
   - 實作變數即時高亮顯示、一鍵清空與個別欄位清除功能。
-- **資料規範化與拆分**:
-  - 將 `knowledge-base.json` 拆分為 `faq.json` 與 `sop.json`，並更新 API 路由。
-  - 統一所有資料結構，補齊 `status` (active/disabled) 欄位。
-- **管理者後台 (Admin Panel) 完整實作**:
-  - **基礎建設**: 實作管理員登入頁、`AdminLayout` 框架與權限攔截機制。
-  - **後端管理 API**: 建立 `admin.ts` 路由，支援安全的 JSON 寫入與自動格式化。
-  - **內容管理模組**: 完成 FAQ、SOP (互動式多步驟表單)、郵件模板與公告管理的視覺化編輯介面（公告管理目前為視覺預覽版）。
-  - **公告管理模組 (視覺預覽版)**: 實作公告列表展示、分類標籤與停用功能介面。
-  - **帳號權限管理**: 實作 RBAC 角色管理 (Admin/High-level/Operator) 與帳號停用功能。
-  - **系統稽核日誌**: 完成 `audit.json` 自動記錄機制與前端日誌查詢/匯出頁面。
-  - **儀表板**: 實作數據總覽與最近操作摘要。
 
 ## 2. 修改過的檔案 (Files Modified)
-- `ai/context.md`, `ai/handoff.md`
-- `client/src/App.tsx`, `client/src/pages/templates.tsx`, `client/src/pages/knowledge-base.tsx`
-- `client/src/components/admin-layout.tsx` (新建立)
-- `client/src/pages/admin/*.tsx` (Dashboard, FAQ, SOP, Templates, Users, Audit, Announcements - 全數新建立)
-- `server/src/index.ts`, `server/src/routes/admin.ts`, `server/src/routes/api.ts`
-- `server/src/data/*.json` (faq, sop, users, audit, announcements - 資料結構更新與新建立)
+- `ai/architecture.md`, `ai/context.md`, `ai/handoff.md`
+- `server/src/db/schema.ts`, `server/src/db/index.ts` (新建立)
+- `server/drizzle.config.ts`, `server/src/scripts/migrate_json_to_db.ts` (新建立)
+- `server/src/routes/api.ts`, `server/src/routes/admin.ts` (重構)
+- `client/src/pages/admin/announcements.tsx`, `client/src/pages/admin/dashboard.tsx`
+- `client/src/components/ui/select.tsx` (新建立)
 
 ## 3. 尚未完成事項 (Pending Items)
 - **資料整理與內容填入**: 將運營端現有的真實 FAQ 與 SOP 資料透過後台錄入系統。
-- **資料庫實體遷移**: 目前仍採 JSON 寫入，最終需執行 Drizzle ORM 與 SQLite 的串接。
 - **登入安全性強化**: 實作正式的密碼雜湊加密與 Session/JWT 驗證。
+- **敏感資料遮罩**: 在前台「系統工具」模組中實作基於角色等級的敏感帳密遮罩功能。
 
 ## 4. 已知問題 (Known Issues)
-- **編譯報錯紀錄**: 今日 `App.tsx` 曾因重複定義與標籤未關閉導致編譯錯誤，已修復。
-- **資料併發寫入**: 目前採每次請求重讀 JSON 策略，若多人同時編輯同一檔案仍有覆蓋風險（待資料庫遷移解決）。
+- **JSON 同步**: 目前 JSON 檔案僅作為備份存放在 `server/src/data/`，系統已完全依賴 `sqlite.db`。
 
 ## 5. 今日建議下一步 (Suggested Next Steps)
-1. **真實資料錄入**: 開始依照 `faq.json` 與 `sop.json` 規範，將真實運營內容填入系統。
-2. **SQLite 資料庫遷移**: 實作 Drizzle Schema 並編寫遷移腳本，將 JSON 資料轉入正式資料庫。
-3. **敏感資料遮罩**: 在前台「系統工具」模組中實作基於角色等級的敏感帳密遮罩功能。
+1. **敏感資料遮罩**: 實作 `tools` 模組中的 `is_sensitive` 邏輯，根據使用者等級決定密碼顯示狀態。
+2. **真實資料錄入**: 依照提取的模板，開始大批量導入真實運營數據。
+3. **密碼安全性**: 將現有的明文密碼透過 `bcrypt` 進行雜湊處理。
 
 ## 6. 重要技術變更 (Important Tech Changes)
 - **UI 交互規範**: 最終確認使用 **`Dialog` (中央大彈窗)** 作為 SOP 詳細資訊的呈現方式，以確保在各設備上擁有最大閱讀空間與視覺通透感。

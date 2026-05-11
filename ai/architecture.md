@@ -4,18 +4,18 @@
 本專案採用典型的 **Client-Server (C/S)** 架構，前後端分離，透過 RESTful API 進行通訊。
 
 ```text
-[ Browser / Client ] <--- HTTP/JSON ---> [ Node.js Server ] <--- File I/O ---> [ Static JSON Data ]
+[ Browser / Client ] <--- HTTP/JSON ---> [ Node.js Server ] <--- Drizzle ORM ---> [ SQLite Database ]
        |                                        |                                     |
-       |-- React 19                             |-- Express.js                        |-- faq.json
-       |-- Tailwind 4                           |-- TypeScript                        |-- sop.json
-       |-- Lucide Icons                         |-- Drizzle ORM (開發中)               |-- announcements.json
+       |-- React 19                             |-- Express.js                        |-- sqlite.db
+       |-- Tailwind 4                           |-- TypeScript                        |-- schema.ts
+       |-- Lucide Icons                         |-- Drizzle ORM                       |-- Migration Script
 ```
 
 ## 2. API Flow
 資料存取流程如下：
 1. **Request**: 前端 React 組件透過 `fetch` 發送 HTTP 請求（例如：`GET /api/faq`）。
 2. **Routing**: 後端 Express 伺服器接收請求並導向至 `server/src/routes/api.ts`。
-3. **Logic**: 路由處理器調用 Helper 函式 `readJsonFile` 從 `server/src/data/` 讀取對應的 JSON 檔案。
+3. **Logic**: 路由處理器透過 Drizzle ORM 從 `sqlite.db` 執行 SQL 查詢。
 4. **Response**: 伺服器將資料封裝為 JSON 格式並回傳給前端。
 5. **Render**: 前端接收資料後更新 React State，觸發 UI 重新渲染。
 
@@ -28,12 +28,11 @@
 - **實作預期**：將在 `server/src/middleware` 實作權限驗證攔截器。
 
 ## 4. DB Flow (資料庫流程)
-- **現狀**：使用靜態 JSON 檔案 (`server/src/data/*.json`) 作為資料來源，適合快速原型開發。
-- **演進中**：伺服器端已配置 `drizzle-orm` 與 `@libsql/client`。
-- **目標流程**：
-  1. 定義 Drizzle Schema (`server/src/models/schema.ts`)。
-  2. 使用 `drizzle-kit` 推播至 SQLite 資料庫。
-  3. API 路由透過 Drizzle Client 執行 SQL 查詢，取代現有的文件讀取。
+- **現狀**：已完成從 JSON 轉向 SQLite 的遷移，使用 `drizzle-orm` 管理資料操作。
+- **管理流程**：
+  1. 定義 Drizzle Schema (`server/src/db/schema.ts`)。
+  2. 使用 `drizzle-kit push` 同步至 SQLite 資料庫。
+  3. API 路由透過 `db` Client 執行類型安全的 SQL 查詢。
 
 ## 5. Frontend/Backend 關係
 - **通訊協議**：HTTP/HTTPS。
@@ -42,7 +41,7 @@
   - `http://localhost:3001/api/faq`
   - `http://localhost:3001/api/sop`
   - `http://localhost:3001/api/announcements`
-- **依賴性**：前端強依賴後端提供的 JSON 結構來驅動動態 UI。
+- **依賴性**：前端強依賴後端提供的 JSON 結構來驅動動態 UI，後端確保資料結構與 Schema 一致。
 
 ## 6. Websocket/Event Flow
 - **現狀**：無即時通訊需求，未導入 Websocket。
