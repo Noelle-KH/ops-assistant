@@ -47,7 +47,7 @@ router.post('/update/:type', (req, res) => {
   const { data, admin } = req.body;
   const fileName = `${type}.json`;
 
-  if (!['faq', 'sop', 'templates', 'groups', 'tools', 'users'].includes(type)) {
+  if (!['faq', 'sop', 'templates', 'groups', 'tools', 'users', 'announcements'].includes(type)) {
     return res.status(400).json({ error: 'Invalid data type' });
   }
 

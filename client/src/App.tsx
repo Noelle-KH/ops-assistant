@@ -15,6 +15,7 @@ import ToolsPage from "@/pages/tools"
 // Admin Pages
 import AdminLoginPage from "@/pages/admin/login"
 import AdminDashboardPage from "@/pages/admin/dashboard"
+import AdminAnnouncementsPage from "@/pages/admin/announcements"
 import AdminFaqPage from "@/pages/admin/faq"
 import AdminSopPage from "@/pages/admin/sop"
 import AdminTemplatesPage from "@/pages/admin/templates"
@@ -60,6 +61,7 @@ function App() {
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboardPage />} />
+            <Route path="announcements" element={<AdminAnnouncementsPage />} />
             <Route path="faq" element={<AdminFaqPage />} />
             <Route path="sop" element={<AdminSopPage />} />
             <Route path="templates" element={<AdminTemplatesPage />} />

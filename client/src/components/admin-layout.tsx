@@ -17,6 +17,7 @@ import { toast } from "sonner";
 
 const NAV_ITEMS = [
   { label: "儀表板", path: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "公告管理", path: "/admin/announcements", icon: ShieldAlert },
   { label: "FAQ 管理", path: "/admin/faq", icon: BookOpen },
   { label: "SOP 管理", path: "/admin/sop", icon: FileText },
   { label: "模板管理", path: "/admin/templates", icon: Mail },

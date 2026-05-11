@@ -1,0 +1,29 @@
+[
+  {
+    "id": "ann_001",
+    "title": "運營領航站 v1.0 正式上線",
+    "content": "全新的內部知識管理平台已完成基礎建設，包含 FAQ、SOP 與解析器工具。歡迎各位同仁開始使用並提供回饋。",
+    "type": "feature",
+    "priority": "high",
+    "date": "2026-05-11",
+    "status": "active"
+  },
+  {
+    "id": "ann_002",
+    "title": "OA 系統路徑更新通知",
+    "content": "因系統升級，用戶管理路徑變更為：系統管理 > 客戶中心 > 用戶列表。請各位在操作 SOP 時注意路徑差異。",
+    "type": "update",
+    "priority": "normal",
+    "date": "2026-05-10",
+    "status": "active"
+  },
+  {
+    "id": "ann_003",
+    "title": "本週末系統維護預告",
+    "content": "本週六 (5/16) 凌晨 02:00 - 04:00 將進行資料庫遷移作業，屆時領航站將暫停服務。",
+    "type": "maintenance",
+    "priority": "urgent",
+    "date": "2026-05-09",
+    "status": "active"
+  }
+]

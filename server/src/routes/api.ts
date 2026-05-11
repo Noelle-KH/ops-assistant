@@ -63,4 +63,13 @@ router.get('/tools', (req, res) => {
   }
 });
 
+router.get('/announcements', (req, res) => {
+  const data = readJsonFile('announcements.json');
+  if (data) {
+    res.json(data);
+  } else {
+    res.status(500).json({ error: 'Failed to read announcements data' });
+  }
+});
+
 export default router;

@@ -20,9 +20,11 @@ interface Stats {
   faqs: number;
   sops: number;
   templates: number;
+  announcements: number;
   activeFaqs: number;
   activeSops: number;
   activeTemplates: number;
+  activeAnnouncements: number;
 }
 
 interface AuditLog {
@@ -37,8 +39,8 @@ const API_BASE_URL = "http://localhost:3001";
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats>({
-    faqs: 0, sops: 0, templates: 0,
-    activeFaqs: 0, activeSops: 0, activeTemplates: 0
+    faqs: 0, sops: 0, templates: 0, announcements: 0,
+    activeFaqs: 0, activeSops: 0, activeTemplates: 0, activeAnnouncements: 0
   });
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,25 +52,29 @@ export default function AdminDashboardPage() {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const [faqRes, sopRes, tplRes, auditRes] = await Promise.all([
+      const [faqRes, sopRes, tplRes, annRes, auditRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/faq`),
         fetch(`${API_BASE_URL}/api/sop`),
         fetch(`${API_BASE_URL}/api/templates`),
+        fetch(`${API_BASE_URL}/api/announcements`),
         fetch(`${API_BASE_URL}/api/admin/audit`)
       ]);
 
       const faqs = await faqRes.json();
       const sops = await sopRes.json();
       const templates = await tplRes.json();
+      const announcements = await annRes.json();
       const logs = await auditRes.json();
 
       setStats({
         faqs: faqs.length,
         sops: sops.length,
         templates: templates.length,
+        announcements: announcements.length,
         activeFaqs: faqs.filter((f: any) => f.status === "active").length,
         activeSops: sops.filter((s: any) => s.status === "active").length,
         activeTemplates: templates.filter((t: any) => t.status === "active").length,
+        activeAnnouncements: announcements.filter((a: any) => a.status === "active").length,
       });
       setLogs(logs.slice(0, 10)); // Top 10 latest logs
     } catch (err) {
@@ -82,6 +88,7 @@ export default function AdminDashboardPage() {
     { label: "FAQ 總數", value: stats.faqs, active: stats.activeFaqs, icon: BookOpen, color: "text-blue-500", bg: "bg-blue-50" },
     { label: "SOP 流程", value: stats.sops, active: stats.activeSops, icon: FileText, color: "text-emerald-500", bg: "bg-emerald-50" },
     { label: "郵件模板", value: stats.templates, active: stats.activeTemplates, icon: Mail, color: "text-purple-500", bg: "bg-purple-50" },
+    { label: "系統公告", value: stats.announcements, active: stats.activeAnnouncements, icon: Activity, color: "text-amber-500", bg: "bg-amber-50" },
   ];
 
   return (
@@ -99,12 +106,12 @@ export default function AdminDashboardPage() {
       </section>
 
       {/* Main Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {STAT_CARDS.map((stat) => (
           <Card key={stat.label} className="border-none shadow-xl shadow-slate-200/50 overflow-hidden group">
             <CardContent className="p-6 relative">
               <div className={cn("absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform duration-500", stat.color)}>
-                <stat.icon size={120} />
+                <stat.icon size={100} />
               </div>
               <div className="flex items-center justify-between mb-4">
                 <div className={cn("p-3 rounded-2xl", stat.bg)}>
