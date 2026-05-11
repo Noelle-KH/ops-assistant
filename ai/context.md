@@ -53,6 +53,7 @@ ops_assistant/
 - **Dashboard**: 系統入口與快捷功能。
 - **Knowledge Base (FAQ/SOP)**: 統一的知識庫頁面，支援分類篩選與標籤切換。
 - **Email Templates**: 郵件模板庫，支援變數填寫與一鍵複製。
+- **Announcements (系統公告)**: 展示產品更新與重要通知，支援分類標籤展示。
 - **Chain Parser (歸屬鏈解析器)**: 將 OA 系統的原始歸屬鏈字串轉換為人類可讀格式。
 - **Groups & Contacts**: 部門群組與負責人清單。
 - **Admin Panel (開發中)**: 視覺化維護介面，包含 FAQ/SOP 編輯、帳號權限管理與操作稽核。
@@ -66,6 +67,7 @@ ops_assistant/
 - **FAQ 管理**: 支援列表、搜尋、分類篩選及表單編輯（包含與 SOP 關聯）。
 - **SOP 管理**: 互動式多步驟編輯器（規則、路徑、例外處理），支援即時預覽。
 - **模板管理**: 變數欄位動態配置與多版本編輯。
+- **公告管理**: 維護首頁展示的產品公告與重要通知（開發中）。
 - **帳號與權限**: 獨立登入頁、角色區分（一般、高級、管理員）。
 
 ### 7.3 API 需求
@@ -79,6 +81,7 @@ ops_assistant/
   - `GET /api/faq`: 獲取 FAQ 清單。
   - `GET /api/sop`: 獲取 SOP 清單。
   - `GET /api/templates`: 獲取郵件模板。
+  - `GET /api/announcements`: 獲取系統公告。
   - `GET /api/groups`: 獲取群組目錄。
   - `GET /api/tools`: 獲取系統連結。
 

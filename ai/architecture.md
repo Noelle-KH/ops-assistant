@@ -8,7 +8,7 @@
        |                                        |                                     |
        |-- React 19                             |-- Express.js                        |-- faq.json
        |-- Tailwind 4                           |-- TypeScript                        |-- sop.json
-       |-- Lucide Icons                         |-- Drizzle ORM (開發中)               |-- templates.json
+       |-- Lucide Icons                         |-- Drizzle ORM (開發中)               |-- announcements.json
 ```
 
 ## 2. API Flow
@@ -41,7 +41,7 @@
 - **端點範例**：
   - `http://localhost:3001/api/faq`
   - `http://localhost:3001/api/sop`
-  - `http://localhost:3001/api/templates`
+  - `http://localhost:3001/api/announcements`
 - **依賴性**：前端強依賴後端提供的 JSON 結構來驅動動態 UI。
 
 ## 6. Websocket/Event Flow

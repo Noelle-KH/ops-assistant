@@ -9,7 +9,8 @@
 - **管理者後台 (Admin Panel) 完整實作**:
   - **基礎建設**: 實作管理員登入頁、`AdminLayout` 框架與權限攔截機制。
   - **後端管理 API**: 建立 `admin.ts` 路由，支援安全的 JSON 寫入與自動格式化。
-  - **內容管理模組**: 完成 FAQ、SOP (互動式多步驟表單) 與郵件模板的視覺化編輯介面。
+  - **內容管理模組**: 完成 FAQ、SOP (互動式多步驟表單)、郵件模板與公告管理的視覺化編輯介面（公告管理目前為視覺預覽版）。
+  - **公告管理模組 (視覺預覽版)**: 實作公告列表展示、分類標籤與停用功能介面。
   - **帳號權限管理**: 實作 RBAC 角色管理 (Admin/High-level/Operator) 與帳號停用功能。
   - **系統稽核日誌**: 完成 `audit.json` 自動記錄機制與前端日誌查詢/匯出頁面。
   - **儀表板**: 實作數據總覽與最近操作摘要。
@@ -18,9 +19,9 @@
 - `ai/context.md`, `ai/handoff.md`
 - `client/src/App.tsx`, `client/src/pages/templates.tsx`, `client/src/pages/knowledge-base.tsx`
 - `client/src/components/admin-layout.tsx` (新建立)
-- `client/src/pages/admin/*.tsx` (Dashboard, FAQ, SOP, Templates, Users, Audit - 全數新建立)
-- `server/src/index.ts`, `server/src/routes/admin.ts` (新建立)
-- `server/src/data/*.json` (faq, sop, users, audit - 資料結構更新與新建立)
+- `client/src/pages/admin/*.tsx` (Dashboard, FAQ, SOP, Templates, Users, Audit, Announcements - 全數新建立)
+- `server/src/index.ts`, `server/src/routes/admin.ts`, `server/src/routes/api.ts`
+- `server/src/data/*.json` (faq, sop, users, audit, announcements - 資料結構更新與新建立)
 
 ## 3. 尚未完成事項 (Pending Items)
 - **資料整理與內容填入**: 將運營端現有的真實 FAQ 與 SOP 資料透過後台錄入系統。
