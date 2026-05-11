@@ -1,74 +1,66 @@
 import express from 'express';
-import cors from 'cors';
-import path from 'path';
-import fs from 'fs';
+import { db } from '../db';
+import { faqs, sops, templates, groups, tools, announcements } from '../db/schema';
 
 const router = express.Router();
-const DATA_DIR = path.join(__dirname, '../data');
 
-// Helper to read JSON file
-const readJsonFile = (fileName: string) => {
-  const filePath = path.join(DATA_DIR, fileName);
+router.get('/faq', async (req, res) => {
   try {
-    const data = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(data);
+    const data = await db.select().from(faqs);
+    res.json(data);
   } catch (error) {
-    console.error(`Error reading ${fileName}:`, error);
-    return null;
-  }
-};
-
-router.get('/faq', (req, res) => {
-  const data = readJsonFile('faq.json');
-  if (data) {
-    res.json(data);
-  } else {
-    res.status(500).json({ error: 'Failed to read FAQ data' });
+    console.error('Error fetching FAQs:', error);
+    res.status(500).json({ error: 'Failed to fetch FAQ data' });
   }
 });
 
-router.get('/sop', (req, res) => {
-  const data = readJsonFile('sop.json');
-  if (data) {
+router.get('/sop', async (req, res) => {
+  try {
+    const data = await db.select().from(sops);
     res.json(data);
-  } else {
-    res.status(500).json({ error: 'Failed to read SOP data' });
+  } catch (error) {
+    console.error('Error fetching SOPs:', error);
+    res.status(500).json({ error: 'Failed to fetch SOP data' });
   }
 });
 
-router.get('/templates', (req, res) => {
-  const data = readJsonFile('templates.json');
-  if (data) {
+router.get('/templates', async (req, res) => {
+  try {
+    const data = await db.select().from(templates);
     res.json(data);
-  } else {
-    res.status(500).json({ error: 'Failed to read templates data' });
+  } catch (error) {
+    console.error('Error fetching templates:', error);
+    res.status(500).json({ error: 'Failed to fetch templates data' });
   }
 });
 
-router.get('/groups', (req, res) => {
-  const data = readJsonFile('groups.json');
-  if (data) {
+router.get('/groups', async (req, res) => {
+  try {
+    const data = await db.select().from(groups);
     res.json(data);
-  } else {
-    res.status(500).json({ error: 'Failed to read groups data' });
+  } catch (error) {
+    console.error('Error fetching groups:', error);
+    res.status(500).json({ error: 'Failed to fetch groups data' });
   }
 });
 
-router.get('/tools', (req, res) => {
-  const data = readJsonFile('tools.json');
-  if (data) {
+router.get('/tools', async (req, res) => {
+  try {
+    const data = await db.select().from(tools);
     res.json(data);
-  } else {
-    res.status(500).json({ error: 'Failed to read tools data' });
+  } catch (error) {
+    console.error('Error fetching tools:', error);
+    res.status(500).json({ error: 'Failed to fetch tools data' });
   }
 });
 
-router.get('/announcements', (req, res) => {
-  const data = readJsonFile('announcements.json');
-  if (data) {
+router.get('/announcements', async (req, res) => {
+  try {
+    const data = await db.select().from(announcements);
     res.json(data);
-  } else {
-    res.status(500).json({ error: 'Failed to read announcements data' });
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    res.status(500).json({ error: 'Failed to fetch announcements data' });
   }
 });
 

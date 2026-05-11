@@ -1,90 +1,87 @@
 import express from 'express';
-import path from 'path';
-import fs from 'fs';
+import { db } from '../db';
+import { 
+  faqs, 
+  sops, 
+  templates, 
+  announcements, 
+  groups, 
+  tools, 
+  users, 
+  auditLogs 
+} from '../db/schema';
+import { sql } from 'drizzle-orm';
 
 const router = express.Router();
-const DATA_DIR = path.join(__dirname, '../data');
 
-// Helper to write JSON file
-const writeJsonFile = (fileName: string, data: any) => {
-  const filePath = path.join(DATA_DIR, fileName);
+// Helper to log audit events to DB
+const logAudit = async (admin: string, action: string, target: string, details: any) => {
   try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
-    return true;
-  } catch (error) {
-    console.error(`Error writing ${fileName}:`, error);
-    return false;
-  }
-};
-
-// Helper to log audit events
-const logAudit = (admin: string, action: string, target: string, details: any) => {
-  const logPath = path.join(DATA_DIR, 'audit.json');
-  let logs = [];
-  try {
-    if (fs.existsSync(logPath)) {
-      logs = JSON.parse(fs.readFileSync(logPath, 'utf8'));
-    }
+    await db.insert(auditLogs).values({
+      timestamp: new Date().toISOString(),
+      admin,
+      action,
+      target,
+      details
+    });
   } catch (e) {
-    console.error("Failed to read audit logs:", e);
+    console.error("Failed to log audit event:", e);
   }
-
-  const newLog = {
-    timestamp: new Date().toISOString(),
-    admin,
-    action,
-    target,
-    details
-  };
-
-  logs.unshift(newLog); // Newest first
-  fs.writeFileSync(logPath, JSON.stringify(logs.slice(0, 1000), null, 2), 'utf8'); // Keep last 1000
 };
 
 // Generic update endpoint
-router.post('/update/:type', (req, res) => {
+router.post('/update/:type', async (req, res) => {
   const { type } = req.params;
   const { data, admin } = req.body;
-  const fileName = `${type}.json`;
 
-  if (!['faq', 'sop', 'templates', 'groups', 'tools', 'users', 'announcements'].includes(type)) {
+  const tableMap: Record<string, any> = {
+    faq: faqs,
+    sop: sops,
+    templates: templates,
+    announcements: announcements,
+    groups: groups,
+    tools: tools,
+    users: users
+  };
+
+  const table = tableMap[type];
+  if (!table) {
     return res.status(400).json({ error: 'Invalid data type' });
   }
 
-  const success = writeJsonFile(fileName, data);
-  if (success) {
-    logAudit(admin || 'Unknown Admin', 'UPDATE', fileName, { count: data.length });
+  try {
+    await db.transaction(async (tx) => {
+      // For bulk sync, we delete existing and re-insert
+      // This matches the previous behavior of overwriting JSON files
+      await tx.delete(table);
+      if (data && data.length > 0) {
+        await tx.insert(table).values(data);
+      }
+    });
+
+    await logAudit(admin || 'Unknown Admin', 'UPDATE', type, { count: data.length });
     res.json({ message: `${type} updated successfully` });
-  } else {
+  } catch (error) {
+    console.error(`Error updating ${type}:`, error);
     res.status(500).json({ error: `Failed to update ${type}` });
   }
 });
 
 // Get Users
-router.get('/users', (req, res) => {
-  const logPath = path.join(DATA_DIR, 'users.json');
+router.get('/users', async (req, res) => {
   try {
-    if (fs.existsSync(logPath)) {
-      const users = JSON.parse(fs.readFileSync(logPath, 'utf8'));
-      res.json(users);
-    } else {
-      res.json([]);
-    }
+    const data = await db.select().from(users);
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to read users' });
   }
 });
 
 // Get Audit Logs
-router.get('/audit', (req, res) => {
-  const logPath = path.join(DATA_DIR, 'audit.json');
+router.get('/audit', async (req, res) => {
   try {
-    if (fs.existsSync(logPath)) {
-      const logs = JSON.parse(fs.readFileSync(logPath, 'utf8'));
-      res.json(logs);
-    } else {
-      res.json([]);
-    }
+    const data = await db.select().from(auditLogs).orderBy(sql`${auditLogs.timestamp} desc`);
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to read audit logs' });
   }
