@@ -46,8 +46,30 @@ router.get('/groups', async (req, res) => {
 
 router.get('/tools', async (req, res) => {
   try {
+    const userRole = req.headers['x-user-role'] as string;
+    const canSeeSensitive = userRole === 'high_level' || userRole === 'admin';
+
     const data = await db.select().from(tools);
-    res.json(data);
+    
+    // Process data to mask sensitive accounts if necessary
+    const processedData = data.map(tool => {
+      if (!tool.accounts) return tool;
+      
+      return {
+        ...tool,
+        accounts: tool.accounts.map(acc => {
+          if (acc.is_sensitive && !canSeeSensitive) {
+            return {
+              ...acc,
+              password: '●●●●●●●● (僅限高級權限)'
+            };
+          }
+          return acc;
+        })
+      };
+    });
+
+    res.json(processedData);
   } catch (error) {
     console.error('Error fetching tools:', error);
     res.status(500).json({ error: 'Failed to fetch tools data' });

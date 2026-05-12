@@ -32,11 +32,16 @@ export default function ToolsPage() {
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Mock user role (normally from auth context)
-  const userRole = "senior_ops"; // senior_ops can see sensitive, general_ops cannot
+  // Get user role from local storage or default to operator
+  const userRole = localStorage.getItem("user_role") || "operator"; 
+  const canSeeSensitive = userRole === "admin" || userRole === "high_level";
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/tools`)
+    fetch(`${API_BASE_URL}/api/tools`, {
+      headers: {
+        'x-user-role': userRole
+      }
+    })
       .then(res => res.json())
       .then(data => {
         setTools(data);
@@ -46,7 +51,7 @@ export default function ToolsPage() {
         console.error("Failed to fetch tools:", err);
         setLoading(false);
       });
-  }, []);
+  }, [userRole]);
 
   const filteredTools = tools.filter(tool => 
     tool.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -67,6 +72,14 @@ export default function ToolsPage() {
 
   const categories = ["後台系統", "測試資源", "敏感資源"];
 
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case "admin": return "系統管理員";
+      case "high_level": return "高級運營";
+      default: return "一般運營";
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -76,7 +89,7 @@ export default function ToolsPage() {
         </div>
         <Badge variant="outline" className="h-8 px-4 border-primary/20 bg-primary/5 text-primary font-bold">
           <ShieldAlert className="mr-2 h-4 w-4" />
-          當前權限：{userRole === "senior_ops" ? "高級運營" : "一般運營"}
+          當前權限：{getRoleBadge(userRole)}
         </Badge>
       </section>
 
@@ -131,7 +144,7 @@ export default function ToolsPage() {
                           <div className="space-y-3 mt-2">
                             {tool.accounts.map((acc, idx) => {
                               const accId = `${tool.id}-${idx}`;
-                              const isRestricted = acc.is_sensitive && userRole !== "senior_ops";
+                              const isRestricted = acc.is_sensitive && !canSeeSensitive;
                               
                               return (
                                 <div key={accId} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-3">

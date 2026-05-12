@@ -8,7 +8,8 @@ import {
   Settings, 
   LogOut, 
   ChevronRight,
-  ShieldAlert
+  ShieldAlert,
+  Home
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,18 +32,22 @@ export function AdminLayout() {
   const adminUser = localStorage.getItem("admin_user");
 
   useEffect(() => {
-    const token = localStorage.getItem("admin_token");
-    if (!token) {
-      toast.error("未經授權，請先登入");
-      navigate("/admin/login");
+    const token = localStorage.getItem("user_token");
+    const role = localStorage.getItem("user_role");
+    if (!token || role !== "admin") {
+      toast.error("權限不足，請重新登入");
+      navigate("/login");
     }
   }, [navigate]);
 
   const handleLogout = () => {
+    localStorage.removeItem("user_token");
+    localStorage.removeItem("user_name");
+    localStorage.removeItem("user_role");
     localStorage.removeItem("admin_token");
     localStorage.removeItem("admin_user");
-    toast.info("已成功登出管理系統");
-    navigate("/admin/login");
+    toast.info("已成功登出系統");
+    navigate("/login");
   };
 
   return (
@@ -83,14 +88,28 @@ export function AdminLayout() {
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">當前管理員</p>
             <p className="text-sm font-bold text-slate-200">{adminUser || "Administrator"}</p>
           </div>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-slate-400 hover:text-red-400 hover:bg-red-400/10 gap-3 font-bold"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-4 w-4" />
-            登出系統
-          </Button>
+          
+          <div className="space-y-1">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-slate-400 hover:text-primary hover:bg-primary/10 gap-3 font-bold"
+              asChild
+            >
+              <Link to="/">
+                <Home className="h-4 w-4" />
+                回到領航站
+              </Link>
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-slate-400 hover:text-red-400 hover:bg-red-400/10 gap-3 font-bold"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4" />
+              登出系統
+            </Button>
+          </div>
         </div>
       </aside>
 

@@ -11,16 +11,29 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate login for now
-    if (username === "admin" && password === "admin123") {
-      localStorage.setItem("admin_token", "fake_token");
-      localStorage.setItem("admin_user", username);
-      toast.success("登入成功，歡迎進入管理者後台");
-      navigate("/admin/dashboard");
-    } else {
-      toast.error("帳號或密碼錯誤");
+    try {
+      const res = await fetch("http://localhost:3001/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("admin_token", "fake_token_active"); // Future: use JWT
+        localStorage.setItem("admin_user", result.user.username);
+        localStorage.setItem("user_role", result.user.role);
+        toast.success(`登入成功，歡迎 ${result.user.username}`);
+        navigate("/admin/dashboard");
+      } else {
+        toast.error(result.error || "帳號或密碼錯誤");
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      toast.error("伺服器連線失敗");
     }
   };
 

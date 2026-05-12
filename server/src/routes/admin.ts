@@ -1,4 +1,5 @@
 import express from 'express';
+import bcrypt from 'bcrypt';
 import { db } from '../db';
 import { 
   faqs, 
@@ -52,10 +53,22 @@ router.post('/update/:type', async (req, res) => {
   try {
     await db.transaction(async (tx) => {
       // For bulk sync, we delete existing and re-insert
-      // This matches the previous behavior of overwriting JSON files
       await tx.delete(table);
       if (data && data.length > 0) {
-        await tx.insert(table).values(data);
+        let processedData = data;
+        
+        // Special handling for users to hash passwords
+        if (type === 'users') {
+          processedData = await Promise.all(data.map(async (u: any) => {
+            if (u.password && !u.password.startsWith('$2b$') && !u.password.startsWith('$2a$')) {
+              const hashedPassword = await bcrypt.hash(u.password, 10);
+              return { ...u, password: hashedPassword };
+            }
+            return u;
+          }));
+        }
+        
+        await tx.insert(table).values(processedData);
       }
     });
 
