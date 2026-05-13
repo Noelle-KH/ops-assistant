@@ -58,46 +58,48 @@ export function AdminLayout() {
   return (
     <div className="min-h-screen flex bg-slate-50/50">
       {/* Admin Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col sticky top-0 h-screen">
-        <div className="p-6 flex items-center gap-3 border-b border-slate-800/50">
+      <aside className="w-64 bg-slate-900 text-white flex flex-col sticky top-0 h-screen shrink-0 shadow-2xl">
+        <div className="p-6 flex items-center gap-3 border-b border-slate-800/50 shrink-0">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
             <Settings className="h-5 w-5 text-white" />
           </div>
           <span className="font-black tracking-tight text-lg">領航站後台</span>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 mt-4">
-          {NAV_ITEMS.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm",
-                  isActive 
-                    ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                    : "text-slate-400 hover:text-white hover:bg-slate-800"
-                )}
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
-                {item.label}
-                {isActive && <ChevronRight className="ml-auto h-3 w-3" />}
-              </Link>
-            );
-          })}
-        </nav>
+        <div className="flex-1 overflow-y-auto min-h-0 py-4 custom-scrollbar">
+          <nav className="px-4 space-y-1">
+            {NAV_ITEMS.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm",
+                    isActive 
+                      ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                      : "text-slate-400 hover:text-white hover:bg-slate-800"
+                  )}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  {item.label}
+                  {isActive && <ChevronRight className="ml-auto h-3 w-3" />}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-        <div className="p-4 border-t border-slate-800/50">
+        <div className="p-4 border-t border-slate-800/50 shrink-0 bg-slate-900/50">
           <div className="bg-slate-800/50 rounded-2xl p-4 mb-4">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">當前管理員</p>
-            <p className="text-sm font-bold text-slate-200">{adminUser || "Administrator"}</p>
+            <p className="text-sm font-bold text-slate-200 truncate">{adminUser || "Administrator"}</p>
           </div>
           
           <div className="space-y-1">
             <Button 
               variant="ghost" 
-              className="w-full justify-start text-slate-400 hover:text-primary hover:bg-primary/10 gap-3 font-bold"
+              className="w-full justify-start text-slate-400 hover:text-primary hover:bg-primary/10 gap-3 font-bold h-10"
               asChild
             >
               <Link to="/">
@@ -108,7 +110,7 @@ export function AdminLayout() {
             
             <Button 
               variant="ghost" 
-              className="w-full justify-start text-slate-400 hover:text-red-400 hover:bg-red-400/10 gap-3 font-bold"
+              className="w-full justify-start text-slate-400 hover:text-red-400 hover:bg-red-400/10 gap-3 font-bold h-10"
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4" />
