@@ -171,10 +171,31 @@ export default function AdminAuditPage() {
                       </code>
                     </div>
                     <div className="col-span-2 text-right">
-                      {log.details?.count && (
-                        <span className="text-[10px] font-bold text-slate-400">
-                          項目筆數: {log.details.count}
-                        </span>
+                      {log.details && (
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-[10px] font-bold text-slate-400">
+                            總數: {log.details.total_count || log.details.count}
+                          </span>
+                          {(log.details.added?.length > 0 || log.details.modified?.length > 0 || log.details.deleted?.length > 0) && (
+                            <div className="flex gap-1">
+                              {log.details.added?.length > 0 && (
+                                <Badge variant="outline" className="text-[9px] h-4 px-1 border-emerald-200 text-emerald-600 bg-emerald-50 font-bold">
+                                  +{log.details.added.length}
+                                </Badge>
+                              )}
+                              {log.details.modified?.length > 0 && (
+                                <Badge variant="outline" className="text-[9px] h-4 px-1 border-blue-200 text-blue-600 bg-blue-50 font-bold">
+                                  ~{log.details.modified.length}
+                                </Badge>
+                              )}
+                              {log.details.deleted?.length > 0 && (
+                                <Badge variant="outline" className="text-[9px] h-4 px-1 border-rose-200 text-rose-600 bg-rose-50 font-bold">
+                                  -{log.details.deleted.length}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

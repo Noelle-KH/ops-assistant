@@ -1,10 +1,18 @@
 import { useState, useEffect } from "react";
-import { Search, Mail, Copy, Check, Info, ExternalLink, X, RotateCcw } from "lucide-react";
+import { Search, Mail, Copy, Check, Info, ExternalLink, X, RotateCcw, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -46,6 +54,10 @@ export default function TemplatesPage() {
   const [expandedTpl, setExpandedTpl] = useState<string | null>(null);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  
+  // Warning Dialog State
+  const [isWarningOpen, setIsWarningOpen] = useState(false);
+  const [pendingCopy, setPendingCopy] = useState<{ id: string, content: string } | null>(null);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/templates`)
@@ -128,10 +140,21 @@ export default function TemplatesPage() {
   };
 
   const handleCopy = (variantId: string, content: string) => {
+    if (content.includes("{{") && content.includes("}}")) {
+      setPendingCopy({ id: variantId, content });
+      setIsWarningOpen(true);
+      return;
+    }
+    performCopy(variantId, content);
+  };
+
+  const performCopy = (variantId: string, content: string) => {
     navigator.clipboard.writeText(content);
     setCopiedId(variantId);
     toast.success("已複製到剪貼簿");
     setTimeout(() => setCopiedId(null), 2000);
+    setIsWarningOpen(false);
+    setPendingCopy(null);
   };
 
   return (
@@ -208,31 +231,53 @@ export default function TemplatesPage() {
                         "border rounded-2xl overflow-hidden transition-all duration-300",
                         expandedTpl === variant.variant_id ? "border-primary/30 ring-4 ring-primary/5 bg-white" : "border-slate-100 bg-slate-50/50 hover:border-slate-200"
                       )}>
-                        <button
-                          onClick={() => setExpandedTpl(expandedTpl === variant.variant_id ? null : variant.variant_id)}
-                          className="w-full text-left p-4 flex items-center justify-between group/btn"
-                        >
-                          <div className="space-y-1">
+                        <div className="w-full text-left p-4 flex items-center justify-between group/btn relative">
+                          <button
+                            onClick={() => setExpandedTpl(expandedTpl === variant.variant_id ? null : variant.variant_id)}
+                            className="absolute inset-0 z-0"
+                          />
+                          <div className="space-y-1 relative z-10 pointer-events-none">
                             <p className={cn(
                               "text-sm font-bold transition-colors",
                               expandedTpl === variant.variant_id ? "text-primary" : "text-slate-800"
                             )}>{variant.label}</p>
                             <p className="text-xs text-slate-500 font-medium">{variant.description}</p>
                           </div>
-                          <div className={cn(
-                            "h-8 w-8 rounded-xl flex items-center justify-center transition-all",
-                            expandedTpl === variant.variant_id ? "bg-primary text-white scale-110 shadow-lg shadow-primary/20" : "bg-white text-slate-400 group-hover/btn:bg-slate-100"
-                          )}>
-                            {expandedTpl === variant.variant_id ? (
-                              <Check className="h-4 w-4" />
-                            ) : (
-                              <Mail className="h-4 w-4" />
+                          <div className="flex items-center gap-2 relative z-10">
+                            {expandedTpl === variant.variant_id && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className={cn(
+                                  "h-8 px-3 font-bold transition-all rounded-lg text-[10px] gap-1.5",
+                                  copiedId === variant.variant_id 
+                                    ? "text-emerald-600 bg-emerald-50" 
+                                    : "text-primary hover:bg-primary/10"
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopy(variant.variant_id, getRawProcessedBody(variant.body, variant.fields));
+                                }}
+                              >
+                                {copiedId === variant.variant_id ? (
+                                  <><Check className="h-3 w-3" /> 已複製</>
+                                ) : (
+                                  <><Copy className="h-3 w-3" /> 複製全文</>
+                                )}
+                              </Button>
                             )}
+                            <div className={cn(
+                              "h-8 w-8 rounded-xl flex items-center justify-center transition-all",
+                              expandedTpl === variant.variant_id ? "bg-primary text-white scale-110 shadow-lg shadow-primary/20" : "bg-white text-slate-400 group-hover/btn:bg-slate-100"
+                            )}>
+                              {expandedTpl === variant.variant_id ? <Check className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
+                            </div>
                           </div>
-                        </button>
+                        </div>
                         
                         {expandedTpl === variant.variant_id && (
                           <div className="px-4 pb-4 space-y-5 animate-in slide-in-from-top-2 duration-500">
+                            <div className="h-px bg-slate-100 mx-2" />
                             {variant.fields.length > 0 && (
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
                                 {variant.fields.map(field => (
@@ -240,14 +285,7 @@ export default function TemplatesPage() {
                                     <div className="flex justify-between items-center px-0.5">
                                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider">{field.label}</label>
                                       {fieldValues[field.key] && (
-                                        <button 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleFieldChange(field.key, "");
-                                          }}
-                                          className="text-slate-400 hover:text-red-500 transition-colors"
-                                          title="清除"
-                                        >
+                                        <button onClick={() => handleFieldChange(field.key, "")} className="text-slate-400 hover:text-red-500 transition-colors">
                                           <X className="h-3 w-3" />
                                         </button>
                                       )}
@@ -262,27 +300,8 @@ export default function TemplatesPage() {
                                 ))}
                               </div>
                             )}
-                            
-                            <div className="relative group/body">
-                              <div className="p-5 rounded-xl bg-slate-900 text-slate-100 text-[13px] leading-relaxed whitespace-pre-wrap font-sans font-medium min-h-[120px] shadow-inner selection:bg-primary/30">
-                                {renderProcessedBody(variant.body, variant.fields)}
-                              </div>
-                              <Button
-                                size="sm"
-                                className={cn(
-                                  "absolute top-3 right-3 h-8 px-4 font-bold transition-all rounded-lg",
-                                  copiedId === variant.variant_id 
-                                    ? "bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-200" 
-                                    : "bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
-                                )}
-                                onClick={() => handleCopy(variant.variant_id, getRawProcessedBody(variant.body, variant.fields))}
-                              >
-                                {copiedId === variant.variant_id ? (
-                                  <><Check className="mr-2 h-3.5 w-3.5" /> 已複製</>
-                                ) : (
-                                  <><Copy className="mr-2 h-3.5 w-3.5" /> 複製全文</>
-                                )}
-                              </Button>
+                            <div className="p-5 rounded-xl bg-slate-900 text-slate-100 text-[13px] leading-relaxed whitespace-pre-wrap font-sans font-medium min-h-[120px] shadow-inner selection:bg-primary/30">
+                              {renderProcessedBody(variant.body, variant.fields)}
                             </div>
                           </div>
                         )}
@@ -317,6 +336,24 @@ export default function TemplatesPage() {
           )}
         </div>
       </ScrollArea>
+
+      <Dialog open={isWarningOpen} onOpenChange={setIsWarningOpen}>
+        <DialogContent className="max-w-md p-8 rounded-3xl border-none shadow-2xl">
+          <DialogHeader className="space-y-4">
+            <div className="h-12 w-12 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto border border-amber-100">
+              <AlertTriangle className="h-6 w-6 text-amber-500" />
+            </div>
+            <DialogTitle className="text-2xl font-black text-slate-900 text-center">仍有未填寫欄位</DialogTitle>
+            <DialogDescription className="text-center text-slate-500 font-medium leading-relaxed">
+              檢測到模板中仍包含 <code className="text-amber-600 bg-amber-50 px-1 rounded">{"{{...}}"}</code> 變數佔位符，確定要直接複製嗎？
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-3 mt-6">
+            <Button variant="outline" className="flex-1 rounded-xl h-11 font-bold border-slate-200" onClick={() => setIsWarningOpen(false)}>返回填寫</Button>
+            <Button className="flex-1 rounded-xl h-11 font-bold bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-100" onClick={() => pendingCopy && performCopy(pendingCopy.id, pendingCopy.content)}>確定複製</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

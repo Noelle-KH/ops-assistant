@@ -210,8 +210,9 @@ export default function Dashboard() {
                     </div>
                   ))
                 ) : (
-                  <div className="flex items-center justify-center h-[200px]">
-                    <p className="text-muted-foreground italic text-sm">暫無公告</p>
+                  <div className="flex flex-col items-center justify-center h-[200px] gap-2">
+                    <Megaphone className="h-8 w-8 text-slate-100" />
+                    <p className="text-slate-400 italic text-sm font-bold">產品公告即將推出</p>
                   </div>
                 )}
               </div>

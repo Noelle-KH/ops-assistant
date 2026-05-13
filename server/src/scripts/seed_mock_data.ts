@@ -7,7 +7,6 @@ import {
   groups, 
   tools
 } from "../db/schema";
-import { v4 as uuidv4 } from 'uuid';
 
 async function seed() {
   console.log("Seeding realistic mock data...");
@@ -54,7 +53,85 @@ async function seed() {
   // 2. More SOPs
   const sopList = [
     {
+      id: "sop_001",
+      title: "轉移歸屬標準流程",
+      category: "帳戶管理",
+      tags: ["歸屬權", "業務員"],
+      rule: {
+        description: "規範客戶帳號在不同業務員或代理之間轉移的審核標準。",
+        conditions: ["客戶本人提出書面申請", "原業務員離職或無意願繼續服務", "新業務員符合承接資格"],
+        restrictions: ["轉移後 30 天內禁止再次轉移", "涉及爭議帳號需先凍結"]
+      },
+      operation: {
+        steps: [
+          { step: 1, action: "核對客戶身分與轉移申請書" },
+          { step: 2, action: "OA > 客戶管理 > 歸屬變更 > 提交申請" },
+          { step: 3, action: "等待二級主管審核通過" },
+          { step: 4, action: "通知新舊業務員變更完成" }
+        ]
+      },
+      exceptions: [
+        { scenario: "客戶涉及詐騙投訴", handling: "立即停止轉移流程，交由風控部門介入" }
+      ],
+      linked_faq: [],
+      linked_template: [],
+      updated_at: new Date().toISOString(),
+      status: "active"
+    },
+    {
       id: "sop_002",
+      title: "負餘額保護審核 SOP",
+      category: "風控審核",
+      tags: ["負餘額", "補償"],
+      rule: {
+        description: "當客戶帳戶因極端行情出現負值時，執行補償清零的審核流程。",
+        conditions: ["帳戶餘額 < 0", "無未平倉訂單", "非惡意刷單導致"],
+        restrictions: ["每位客戶每季度上限 3 次", "單次補償金額超過 $5000 需總監審核"]
+      },
+      operation: {
+        steps: [
+          { step: 1, action: "確認所有訂單已平倉且無掛單" },
+          { step: 2, action: "系統後台 > 財務管理 > 負餘額調整 > 新增記錄" },
+          { step: 3, action: "上傳行情異常時段截圖作為附件" },
+          { step: 4, action: "點擊『執行調整』完成清零" }
+        ]
+      },
+      exceptions: [
+        { scenario: "惡意利用漏洞獲利", handling: "拒絕補償並考慮封鎖帳號" }
+      ],
+      linked_faq: ["faq_006"],
+      linked_template: [],
+      updated_at: new Date().toISOString(),
+      status: "active"
+    },
+    {
+      id: "sop_003",
+      title: "取款審核判斷 SOP",
+      category: "出金管理",
+      tags: ["出金", "反洗錢"],
+      rule: {
+        description: "確保客戶取款符合安全性與反洗錢規定。",
+        conditions: ["取款人姓名與實名認證一致", "取款路徑為原路返回（入金路徑）", "帳戶保證金比例 > 100%"],
+        restrictions: ["處理時間超過 24 小時需主動告知原因", "單筆超過 $50,000 需視訊核身"]
+      },
+      operation: {
+        steps: [
+          { step: 1, action: "核對取款金額與帳戶可用餘額" },
+          { step: 2, action: "檢查最近交易記錄有無洗錢嫌疑" },
+          { step: 3, action: "OA > 出金審核 > 點擊『通過』" },
+          { step: 4, action: "確認金流系統已下發支付指令" }
+        ]
+      },
+      exceptions: [
+        { scenario: "第三方帳戶取款", handling: "直接拒絕，要求更換為本人帳戶" }
+      ],
+      linked_faq: ["faq_005"],
+      linked_template: [],
+      updated_at: new Date().toISOString(),
+      status: "active"
+    },
+    {
+      id: "sop_004",
       title: "異地登入風險處理 SOP",
       category: "帳戶管理",
       tags: ["安全性", "風險管理"],

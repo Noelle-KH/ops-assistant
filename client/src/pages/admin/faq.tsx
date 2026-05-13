@@ -27,6 +27,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { AssociationSelector } from "@/components/association-selector";
 
 interface FAQItem {
   id: string;
@@ -324,25 +325,21 @@ export default function AdminFaqPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">關聯 SOP ID</Label>
-                <Input 
-                  placeholder="如: sop_001"
-                  value={currentFaq?.linked_sop || ""}
-                  onChange={(e) => setCurrentFaq(prev => ({ ...prev!, linked_sop: e.target.value }))}
-                  className="rounded-xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">關聯模板 ID</Label>
-                <Input 
-                  placeholder="如: tpl_001"
-                  value={currentFaq?.linked_template || ""}
-                  onChange={(e) => setCurrentFaq(prev => ({ ...prev!, linked_template: e.target.value }))}
-                  className="rounded-xl"
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <AssociationSelector 
+                type="sop"
+                label="關聯 SOP"
+                maxSelections={1}
+                selectedIds={currentFaq?.linked_sop ? [currentFaq.linked_sop] : []}
+                onChange={(ids) => setCurrentFaq(prev => ({ ...prev!, linked_sop: ids[0] || "" }))}
+              />
+              <AssociationSelector 
+                type="template"
+                label="關聯郵件模板"
+                maxSelections={1}
+                selectedIds={currentFaq?.linked_template ? [currentFaq.linked_template] : []}
+                onChange={(ids) => setCurrentFaq(prev => ({ ...prev!, linked_template: ids[0] || "" }))}
+              />
             </div>
           </div>
 

@@ -33,6 +33,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { AssociationSelector } from "@/components/association-selector";
 
 interface SOPItem {
   id: string;
@@ -227,7 +228,10 @@ export default function AdminSopPage() {
             )}>
               <div className="flex justify-between items-start mb-4">
                 <div className="space-y-1">
-                  <Badge variant="secondary" className="text-[10px] font-bold uppercase">{sop.category}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-[10px] font-bold uppercase">{sop.category}</Badge>
+                    <code className="text-[9px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">ID: {sop.id}</code>
+                  </div>
                   <h3 className="text-lg font-black text-slate-900">{sop.title}</h3>
                 </div>
                 <div className="flex gap-1">
@@ -490,25 +494,19 @@ export default function AdminSopPage() {
                   </div>
                 </div>
 
-                <div className="pt-8 border-t border-slate-100 grid grid-cols-2 gap-8">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">關聯 FAQ IDs (以逗號分隔)</Label>
-                    <Input 
-                      placeholder="如: faq_001, faq_005"
-                      value={currentSop.linked_faq?.join(", ")}
-                      onChange={e => setCurrentSop({...currentSop, linked_faq: e.target.value.split(",").map(t => t.trim()).filter(Boolean)})}
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">關聯模板 IDs (以逗號分隔)</Label>
-                    <Input 
-                      placeholder="如: tpl_001, tpl_002"
-                      value={currentSop.linked_template?.join(", ")}
-                      onChange={e => setCurrentSop({...currentSop, linked_template: e.target.value.split(",").map(t => t.trim()).filter(Boolean)})}
-                      className="rounded-xl"
-                    />
-                  </div>
+                <div className="pt-8 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <AssociationSelector 
+                    type="faq"
+                    label="關聯 FAQ"
+                    selectedIds={currentSop.linked_faq || []}
+                    onChange={(ids) => setCurrentSop({...currentSop, linked_faq: ids})}
+                  />
+                  <AssociationSelector 
+                    type="template"
+                    label="關聯郵件模板"
+                    selectedIds={currentSop.linked_template || []}
+                    onChange={(ids) => setCurrentSop({...currentSop, linked_template: ids})}
+                  />
                 </div>
               </div>
             )}

@@ -27,6 +27,7 @@ interface FAQItem {
   linked_sop?: string;
   linked_template?: string;
   updated_at: string;
+  status: "active" | "disabled";
 }
 
 interface SOPItem {
@@ -59,6 +60,7 @@ export default function KnowledgeBasePage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("全部");
   const [loading, setLoading] = useState(true);
+  const [showEnglish, setShowEnglish] = useState<Record<string, boolean>>({});
   
   // SOP Dialog State
   const [activeSop, setActiveSop] = useState<SOPItem | null>(null);
@@ -309,7 +311,15 @@ export default function KnowledgeBasePage() {
                       <span className="font-bold text-lg leading-snug text-slate-900">{faq.question}</span>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pb-8 pt-2 space-y-6">
+                  <AccordionContent className="pb-10 pt-2 space-y-6 overflow-visible">
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {faq.tags.map(tag => (
+                        <Badge key={tag} variant="outline" className="text-[9px] font-bold text-slate-400 rounded-lg bg-slate-50/50 border-slate-200 px-2 h-5">
+                          #{tag}
+                        </Badge>
+                      ))}
+                    </div>
+
                     <div className="p-6 rounded-xl bg-slate-50 border border-slate-100 text-base leading-relaxed whitespace-pre-wrap text-slate-700 font-medium">
                       {faq.answer}
                     </div>
@@ -326,22 +336,28 @@ export default function KnowledgeBasePage() {
                       )}
 
                       {faq.answer_en && (
-                        <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 flex gap-3 shadow-sm">
-                          <Globe className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-                          <div className="space-y-1">
-                            <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest">English Reply</p>
-                            <p className="text-sm text-blue-800/90 leading-relaxed italic">{faq.answer_en}</p>
-                          </div>
+                        <div className="space-y-3">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 px-2 text-[10px] font-black text-blue-600 hover:bg-blue-50 gap-1.5"
+                            onClick={() => setShowEnglish(prev => ({ ...prev, [faq.id]: !prev[faq.id] }))}
+                          >
+                            <Globe className="h-3 w-3" />
+                            {showEnglish[faq.id] ? "隱藏英文回覆" : "顯示英文回覆"}
+                          </Button>
+                          
+                          {showEnglish[faq.id] && (
+                            <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 flex gap-3 shadow-sm animate-in slide-in-from-top-1 duration-300">
+                              <Globe className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                              <div className="space-y-1">
+                                <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest">English Reply</p>
+                                <p className="text-sm text-blue-800/90 leading-relaxed italic">{faq.answer_en}</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {faq.tags.map(tag => (
-                        <Badge key={tag} variant="outline" className="text-[10px] font-normal text-slate-400 rounded-md">
-                          #{tag}
-                        </Badge>
-                      ))}
                     </div>
 
                     {(faq.linked_sop || faq.linked_template) && (

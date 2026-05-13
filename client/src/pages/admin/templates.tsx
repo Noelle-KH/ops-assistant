@@ -30,6 +30,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { AssociationSelector } from "@/components/association-selector";
 
 interface TemplateField {
   key: string;
@@ -330,25 +331,21 @@ export default function AdminTemplatesPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">關聯 FAQ ID</Label>
-                    <Input 
-                      placeholder="如: faq_001"
-                      value={currentTpl.linked_faq || ""}
-                      onChange={e => setCurrentTpl({...currentTpl, linked_faq: e.target.value})}
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">關聯 SOP ID</Label>
-                    <Input 
-                      placeholder="如: sop_001"
-                      value={currentTpl.linked_sop || ""}
-                      onChange={e => setCurrentTpl({...currentTpl, linked_sop: e.target.value})}
-                      className="rounded-xl"
-                    />
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <AssociationSelector 
+                    type="faq"
+                    label="關聯 FAQ"
+                    maxSelections={1}
+                    selectedIds={currentTpl.linked_faq ? [currentTpl.linked_faq] : []}
+                    onChange={(ids) => setCurrentTpl({...currentTpl, linked_faq: ids[0] || ""})}
+                  />
+                  <AssociationSelector 
+                    type="sop"
+                    label="關聯 SOP"
+                    maxSelections={1}
+                    selectedIds={currentTpl.linked_sop ? [currentTpl.linked_sop] : []}
+                    onChange={(ids) => setCurrentTpl({...currentTpl, linked_sop: ids[0] || ""})}
+                  />
                 </div>
               </div>
             )}

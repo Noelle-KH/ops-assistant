@@ -73,8 +73,8 @@ export default function GroupsPage() {
         />
       </div>
 
-      <ScrollArea className="h-[calc(100vh-18rem)]">
-        <div className="space-y-12 pb-12">
+      <ScrollArea className="h-[calc(100vh-18rem)] -mx-4 px-4 md:-mx-8 md:px-8">
+        <div className="space-y-12 pb-12 pt-4 px-2">
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {Array.from({ length: 4 }).map((_, i) => (

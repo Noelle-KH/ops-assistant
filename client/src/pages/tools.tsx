@@ -59,9 +59,22 @@ export default function ToolsPage() {
     tool.desc.toLowerCase().includes(search.toLowerCase())
   );
 
-  const togglePassword = (accountId: string) => {
-    setShowPasswords(prev => ({ ...prev, [accountId]: !prev[accountId] }));
-  };
+  useEffect(() => {
+    // Auto-hide passwords after 5 minutes
+    const timer = setTimeout(() => {
+      if (Object.keys(showPasswords).length > 0) {
+        setShowPasswords({});
+        toast.info("基於安全性，明文密碼已自動隱藏");
+      }
+    }, 5 * 60 * 1000);
+
+    return () => clearTimeout(timer);
+  }, [showPasswords]);
+
+  useEffect(() => {
+    // Hide passwords when navigating away
+    return () => setShowPasswords({});
+  }, []);
 
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);

@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import { useState, useEffect } from "react"
+import { GlobalSearch } from "./global-search"
 
 const items = [
   { title: "首頁", url: "/", icon: Home },
@@ -38,9 +40,21 @@ const items = [
 export function AppSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
+  const [searchOpen, setSearchOpen] = useState(false)
   const userName = localStorage.getItem("user_name") || "未登入"
   const userRole = localStorage.getItem("user_role") || "operator"
   const isAdmin = userRole === "admin"
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setSearchOpen((open) => !open)
+      }
+    }
+    document.addEventListener("keydown", down)
+    return () => document.removeEventListener("keydown", down)
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem("user_token")
@@ -48,6 +62,7 @@ export function AppSidebar() {
     localStorage.removeItem("user_role")
     localStorage.removeItem("admin_token")
     localStorage.removeItem("admin_user")
+    localStorage.removeItem("last_activity")
     toast.success("已成功登出系統")
     navigate("/login")
   }
@@ -61,73 +76,81 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b h-14 flex items-center px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Wrench className="h-4 w-4" />
+    <>
+      <Sidebar collapsible="icon">
+        <SidebarHeader className="border-b h-14 flex items-center px-4">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <Wrench className="h-4 w-4" />
+            </div>
+            <span className="font-bold text-lg truncate">領航站</span>
+          </Link>
+        </SidebarHeader>
+        <SidebarContent>
+          <div className="px-2 py-4">
+            <div className="relative group cursor-pointer" onClick={() => setSearchOpen(true)}>
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <SidebarInput 
+                placeholder="全域搜尋... (Ctrl+K)" 
+                className="pl-8 cursor-pointer hover:border-primary/50 transition-all" 
+                readOnly
+              />
+            </div>
           </div>
-          <span className="font-bold text-lg truncate">領航站</span>
-        </Link>
-      </SidebarHeader>
-      <SidebarContent>
-        <div className="px-2 py-4">
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <SidebarInput placeholder="全域搜尋..." className="pl-8" />
-          </div>
-        </div>
-        <SidebarGroup>
-          <SidebarGroupLabel>導覽</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
-                    tooltip={item.title}
-                    isActive={location.pathname === item.url}
-                  >
-                    <Link to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>導覽</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild 
+                      tooltip={item.title}
+                      isActive={location.pathname === item.url}
+                    >
+                      <Link to={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3 px-2">
-            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-              <User className="h-4 w-4 text-slate-500" />
+        <SidebarFooter className="p-4 border-t">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3 px-2">
+              <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                <User className="h-4 w-4 text-slate-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-slate-900 truncate">{userName}</p>
+                <p className="text-[10px] font-medium text-slate-500 truncate">{getRoleLabel(userRole)}</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-slate-900 truncate">{userName}</p>
-              <p className="text-[10px] font-medium text-slate-500 truncate">{getRoleLabel(userRole)}</p>
-            </div>
-          </div>
-          
-          <div className="space-y-1">
-            {isAdmin && (
-              <SidebarMenuButton asChild tooltip="進入管理後台">
-                <Link to="/admin/dashboard" className="text-primary hover:text-primary hover:bg-primary/10">
-                  <Settings className="h-4 w-4" />
-                  <span>進入管理後台</span>
-                </Link>
+            
+            <div className="space-y-1">
+              {isAdmin && (
+                <SidebarMenuButton asChild tooltip="進入管理後台">
+                  <Link to="/admin/dashboard" className="text-primary hover:text-primary hover:bg-primary/10">
+                    <Settings className="h-4 w-4" />
+                    <span>進入管理後台</span>
+                  </Link>
+                </SidebarMenuButton>
+              )}
+              <SidebarMenuButton onClick={handleLogout} tooltip="登出系統" className="text-slate-500 hover:text-red-500 hover:bg-red-50">
+                <LogOut className="h-4 w-4" />
+                <span>登出系統</span>
               </SidebarMenuButton>
-            )}
-            <SidebarMenuButton onClick={handleLogout} tooltip="登出系統" className="text-slate-500 hover:text-red-500 hover:bg-red-50">
-              <LogOut className="h-4 w-4" />
-              <span>登出系統</span>
-            </SidebarMenuButton>
+            </div>
           </div>
-        </div>
-      </SidebarFooter>
-    </Sidebar>
+        </SidebarFooter>
+      </Sidebar>
+      <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
+    </>
   )
 }
+

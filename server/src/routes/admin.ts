@@ -51,6 +51,32 @@ router.post('/update/:type', async (req, res) => {
   }
 
   try {
+    // 1. Fetch old data to calculate diff
+    const oldData = await db.select().from(table);
+    const oldMap = new Map(oldData.map((item: any) => [item.id, item]));
+    const newMap = new Map(data.map((item: any) => [item.id, item]));
+
+    const added = data.filter((item: any) => !oldMap.has(item.id)).map((item: any) => item.id || item.username);
+    const deleted = oldData.filter((item: any) => !newMap.has(item.id)).map((item: any) => item.id || item.username);
+    const modified: string[] = [];
+
+    data.forEach((newItem: any) => {
+      const oldItem = oldMap.get(newItem.id);
+      if (oldItem) {
+        // Simple comparison of JSON strings to detect changes
+        if (JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
+          modified.push(newItem.id || newItem.username);
+        }
+      }
+    });
+
+    const auditDetails = {
+      total_count: data.length,
+      added,
+      modified,
+      deleted
+    };
+
     await db.transaction(async (tx) => {
       // For bulk sync, we delete existing and re-insert
       await tx.delete(table);
@@ -72,8 +98,8 @@ router.post('/update/:type', async (req, res) => {
       }
     });
 
-    await logAudit(admin || 'Unknown Admin', 'UPDATE', type, { count: data.length });
-    res.json({ message: `${type} updated successfully` });
+    await logAudit(admin || 'Unknown Admin', 'UPDATE', type, auditDetails);
+    res.json({ message: `${type} updated successfully`, details: auditDetails });
   } catch (error) {
     console.error(`Error updating ${type}:`, error);
     res.status(500).json({ error: `Failed to update ${type}` });
