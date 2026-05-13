@@ -14,8 +14,8 @@
 - **Backend**:
   - Runtime: Node.js (Express)
   - Language: TypeScript
-  - ORM: Drizzle ORM (預留/開發中)
-  - Database: SQLite / Static JSON Files
+  - ORM: Drizzle ORM
+  - Database: SQLite (Local) / Turso (Cloud)
 - **Other**:
   - Theme: next-themes (支援 Dark/Light mode)
 
@@ -76,7 +76,7 @@ ops_assistant/
 
 ## 8. API 架構
 - **RESTful API**: 使用 Express 構建。
-- **Data Source**: 目前主要從 `server/src/data/*.json` 讀取靜態資料。
+- **Data Source**: 使用 Drizzle ORM + SQLite (本地) / Turso (雲端)。
 - **Endpoints**:
   - `GET /api/faq`: 獲取 FAQ 清單。
   - `GET /api/sop`: 獲取 SOP 清單。
