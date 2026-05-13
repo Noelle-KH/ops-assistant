@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { 
   UserPlus, 
-  Shield, 
+  ShieldAlert, 
   UserCheck, 
   UserX, 
   Search, 
@@ -9,7 +9,10 @@ import {
   Trash2,
   Lock,
   Mail,
-  Key
+  Key,
+  ShieldCheck,
+  Zap,
+  User
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,9 +41,27 @@ interface UserItem {
 }
 
 const ROLES = [
-  { value: "admin", label: "系統管理員", color: "bg-red-500", icon: Shield },
-  { value: "high_level", label: "高級運營", color: "bg-amber-500", icon: UserCheck },
-  { value: "operator", label: "一般運營", color: "bg-blue-500", icon: Mail },
+  { 
+    value: "admin", 
+    label: "系統管理員", 
+    description: "最高權限", 
+    color: "bg-rose-600", 
+    icon: ShieldAlert 
+  },
+  { 
+    value: "high_level", 
+    label: "高級運營", 
+    description: "敏感資訊存取", 
+    color: "bg-amber-500", 
+    icon: Zap 
+  },
+  { 
+    value: "operator", 
+    label: "一般運營", 
+    description: "基礎功能查詢", 
+    color: "bg-blue-500", 
+    icon: User 
+  },
 ];
 
 const API_BASE_URL = "http://localhost:3001";
@@ -180,7 +201,7 @@ export default function AdminUsersPage() {
                       ROLES.find(r => r.value === user.role)?.color || "bg-slate-400"
                     )}>
                       {(() => {
-                        const Icon = ROLES.find(r => r.value === user.role)?.icon || Shield;
+                        const Icon = ROLES.find(r => r.value === user.role)?.icon || ShieldAlert;
                         return <Icon className="h-6 w-6" />;
                       })()}
                     </div>
@@ -225,73 +246,99 @@ export default function AdminUsersPage() {
       </ScrollArea>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="max-w-md rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black flex items-center gap-2">
-              <Key className="h-5 w-5 text-primary" />
-              {currentUser?.id ? "修改帳號權限" : "建立新帳號"}
+        <DialogContent className="max-w-md rounded-2xl border-none shadow-2xl">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-2xl font-black flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <ShieldCheck className="h-6 w-6 text-primary" />
+              </div>
+              {currentUser?.id ? "修改帳號權限" : "建立新運營帳號"}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">使用者名稱 (Username)</Label>
-              <Input 
-                placeholder="如: hank_ops" 
-                className="h-11 rounded-xl bg-slate-50/50"
-                value={currentUser?.username || ""}
-                onChange={e => setCurrentUser({...currentUser!, username: e.target.value})}
-                disabled={!!currentUser?.id}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">使用者名稱</Label>
+                <Input 
+                  placeholder="hank_ops" 
+                  className="h-11 rounded-xl bg-slate-50 border-none font-bold"
+                  value={currentUser?.username || ""}
+                  onChange={e => setCurrentUser({...currentUser!, username: e.target.value})}
+                  disabled={!!currentUser?.id}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">顯示姓名</Label>
+                <Input 
+                  placeholder="陳大文" 
+                  className="h-11 rounded-xl font-bold"
+                  value={currentUser?.displayName || ""}
+                  onChange={e => setCurrentUser({...currentUser!, displayName: e.target.value})}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">顯示姓名 (Display Name)</Label>
-              <Input 
-                placeholder="如: Hank Chen" 
-                className="h-11 rounded-xl"
-                value={currentUser?.displayName || ""}
-                onChange={e => setCurrentUser({...currentUser!, displayName: e.target.value})}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">角色權限 (Role)</Label>
-              <div className="grid grid-cols-3 gap-2">
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">選取角色與權限</Label>
+              <div className="grid grid-cols-1 gap-2">
                 {ROLES.map(role => (
                   <button
                     key={role.value}
                     onClick={() => setCurrentUser({...currentUser!, role: role.value as any})}
                     className={cn(
-                      "p-3 rounded-xl border text-[10px] font-black uppercase transition-all flex flex-col items-center gap-2",
+                      "p-4 rounded-2xl border-2 transition-all flex items-center gap-4 text-left group",
                       currentUser?.role === role.value 
-                        ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-black/10" 
-                        : "bg-white text-slate-400 border-slate-100 hover:border-primary/50"
+                        ? "bg-slate-900 border-slate-900 shadow-xl" 
+                        : "bg-white border-slate-100 hover:border-primary/30"
                     )}
                   >
-                    <role.icon className={cn("h-4 w-4", currentUser?.role === role.value ? "text-primary" : "text-slate-300")} />
-                    {role.label}
+                    <div className={cn(
+                      "h-10 w-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg",
+                      role.color,
+                      currentUser?.role === role.value ? "scale-110" : "opacity-80 group-hover:opacity-100"
+                    )}>
+                      <role.icon className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "text-sm font-black mb-0.5",
+                        currentUser?.role === role.value ? "text-white" : "text-slate-900"
+                      )}>{role.label}</p>
+                      <p className={cn(
+                        "text-[10px] font-bold",
+                        currentUser?.role === role.value ? "text-slate-400" : "text-slate-500"
+                      )}>{role.description}</p>
+                    </div>
+                    {currentUser?.role === role.value && (
+                      <div className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center">
+                        <ShieldCheck className="h-4 w-4" />
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
             </div>
 
             {!currentUser?.id && (
-              <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 flex gap-3">
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex gap-3 shadow-sm shadow-amber-100/50">
                 <Lock className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-[10px] font-bold text-amber-700 leading-relaxed">
-                  新帳號建立後，初始密碼將預設為 <span className="underline decoration-2">Iexs123456</span>，請通知使用者於首次登入後儘速修改。
-                </p>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">安全提醒</p>
+                  <p className="text-[10px] font-bold text-amber-700/80 leading-relaxed">
+                    初始密碼預設為 <span className="text-amber-900 underline decoration-2">Iexs123456</span>。
+                  </p>
+                </div>
               </div>
             )}
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="p-2 gap-3">
             <Button variant="ghost" onClick={() => setIsEditing(false)} className="rounded-xl font-bold text-slate-400">
               取消
             </Button>
-            <Button onClick={handleSave} className="rounded-xl font-bold px-8 shadow-lg shadow-primary/20">
-              儲存帳號資訊
+            <Button onClick={handleSave} className="rounded-xl font-bold h-11 px-8 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
+              儲存帳號設定
             </Button>
           </DialogFooter>
         </DialogContent>

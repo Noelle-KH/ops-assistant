@@ -9,7 +9,10 @@ import {
   LogOut, 
   ChevronRight,
   ShieldAlert,
-  Home
+  Home,
+  MessageSquare,
+  Wrench,
+  UserCog
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,7 +25,9 @@ const NAV_ITEMS = [
   { label: "FAQ 管理", path: "/admin/faq", icon: BookOpen },
   { label: "SOP 管理", path: "/admin/sop", icon: FileText },
   { label: "模板管理", path: "/admin/templates", icon: Mail },
-  { label: "群組與權限", path: "/admin/users", icon: Users },
+  { label: "群組管理", path: "/admin/groups", icon: MessageSquare },
+  { label: "工具管理", path: "/admin/tools", icon: Wrench },
+  { label: "帳號與權限", path: "/admin/users", icon: UserCog },
   { label: "系統日誌", path: "/admin/audit", icon: ShieldAlert },
 ];
 

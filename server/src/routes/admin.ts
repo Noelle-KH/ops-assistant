@@ -86,10 +86,27 @@ router.post('/update/:type', async (req, res) => {
         // Special handling for users to hash passwords
         if (type === 'users') {
           processedData = await Promise.all(data.map(async (u: any) => {
-            if (u.password && !u.password.startsWith('$2b$') && !u.password.startsWith('$2a$')) {
-              const hashedPassword = await bcrypt.hash(u.password, 10);
+            let passwordToHash = u.password;
+            const isExistingUser = oldMap.has(u.id);
+            
+            // If it's a new user (not in old database) and no password provided, use default
+            if (!passwordToHash && !isExistingUser) {
+              passwordToHash = "Iexs123456";
+            }
+            
+            // If password is not yet hashed, hash it
+            if (passwordToHash && !passwordToHash.startsWith('$2b$') && !passwordToHash.startsWith('$2a$')) {
+              const hashedPassword = await bcrypt.hash(passwordToHash, 10);
               return { ...u, password: hashedPassword };
             }
+            
+            // If editing existing user without changing password, password might be missing from UI model
+            // but required by DB. We should find the old password if it's null.
+            if (!passwordToHash && isExistingUser) {
+              const oldItem = oldMap.get(u.id);
+              return { ...u, password: oldItem?.password };
+            }
+
             return u;
           }));
         }

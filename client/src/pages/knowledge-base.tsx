@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { Search, Info, Globe, ExternalLink, Mail, ChevronRight, BookOpen } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -62,11 +62,18 @@ export default function KnowledgeBasePage() {
   const [loading, setLoading] = useState(true);
   const [showEnglish, setShowEnglish] = useState<Record<string, boolean>>({});
   
+  // URL Params & Search Params
+  const params = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const targetId = searchParams.get("id");
+  const targetType = searchParams.get("type");
+
   // SOP Dialog State
   const [activeSop, setActiveSop] = useState<SOPItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  const params = useParams<{ id: string }>();
+  // Accordion State
+  const [expandedFaq, setExpandedFaq] = useState<string | undefined>(undefined);
 
   // Fetch FAQs & SOPs
   useEffect(() => {
@@ -81,11 +88,10 @@ export default function KnowledgeBasePage() {
         const sopData = await sopRes.json();
         
         setFaqs(faqData);
-        // Only keep active SOPs for normal users
         const activeSops = sopData.filter((s: SOPItem) => s.status !== "disabled");
         setSops(activeSops);
 
-        // Handle direct linking if needed
+        // 1. Handle direct SOP path linking (from routes)
         if (params.id) {
           const foundSop = activeSops.find((s: SOPItem) => s.id === params.id);
           if (foundSop) {
@@ -93,6 +99,18 @@ export default function KnowledgeBasePage() {
             setIsDialogOpen(true);
           }
         }
+
+        // 2. Handle Search Params linking (from templates/other)
+        if (targetId && targetType === "sop") {
+          const foundSop = activeSops.find((s: SOPItem) => s.id === targetId);
+          if (foundSop) {
+            setActiveSop(foundSop);
+            setIsDialogOpen(true);
+          }
+        } else if (targetId && targetType === "faq") {
+          setExpandedFaq(targetId);
+        }
+
       } catch (err) {
         console.error("Failed to fetch data:", err);
       } finally {
@@ -101,11 +119,17 @@ export default function KnowledgeBasePage() {
     };
 
     fetchData();
-  }, [params.id]);
+  }, [params.id, targetId, targetType]);
 
   // Filtered FAQ list
   const filteredFaqs = faqs.filter(faq => {
     if (faq.status === "disabled") return false;
+    
+    // If a specific FAQ is targeted via URL, show only that one
+    if (targetId && targetType === "faq") {
+      return faq.id === targetId;
+    }
+
     const matchesSearch = 
       faq.question.toLowerCase().includes(search.toLowerCase()) ||
       faq.answer.toLowerCase().includes(search.toLowerCase()) ||
@@ -190,7 +214,7 @@ export default function KnowledgeBasePage() {
                   {/* Precise Timeline Line */}
                   <div className="absolute left-[19px] top-2 bottom-0 w-[2px] bg-slate-200 group-last:hidden" />
                   
-                  {/* Precise Timeline Dot (w-10 = 40px, center = 20px) */}
+                  {/* Precise Timeline Dot */}
                   <div className="absolute left-0 top-0 h-10 w-10 rounded-full border-4 border-white bg-primary text-white flex items-center justify-center z-10 shadow-md group-hover:scale-110 transition-transform duration-300">
                     <span className="text-sm font-black">{step.step}</span>
                   </div>
@@ -291,12 +315,18 @@ export default function KnowledgeBasePage() {
               <p className="text-sm text-muted-foreground">載入資料中...</p>
             </div>
           ) : filteredFaqs.length > 0 ? (
-            <Accordion type="single" collapsible className="w-full space-y-4">
+            <Accordion 
+              type="single" 
+              collapsible 
+              className="w-full space-y-4"
+              value={expandedFaq}
+              onValueChange={setExpandedFaq}
+            >
               {filteredFaqs.map((faq) => (
                 <AccordionItem
                   key={faq.id}
                   value={faq.id}
-                  className="border rounded-xl px-6 bg-background hover:bg-slate-50/40 transition-all overflow-hidden"
+                  className="border rounded-xl px-6 bg-background hover:bg-slate-50/40 transition-all"
                 >
                   <AccordionTrigger className="hover:no-underline py-6 text-left">
                     <div className="flex flex-col gap-2">
@@ -311,7 +341,7 @@ export default function KnowledgeBasePage() {
                       <span className="font-bold text-lg leading-snug text-slate-900">{faq.question}</span>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pb-10 pt-2 space-y-6 overflow-visible">
+                  <AccordionContent className="pb-10 pt-2 space-y-6 !overflow-visible !h-auto">
                     <div className="flex flex-wrap gap-2 mb-2">
                       {faq.tags.map(tag => (
                         <Badge key={tag} variant="outline" className="text-[9px] font-bold text-slate-400 rounded-lg bg-slate-50/50 border-slate-200 px-2 h-5">
@@ -324,9 +354,9 @@ export default function KnowledgeBasePage() {
                       {faq.answer}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                       {faq.ops_note && (
-                        <div className="p-4 rounded-xl bg-orange-50/50 border border-orange-100 flex gap-3 shadow-sm">
+                        <div className="p-4 rounded-xl bg-orange-50/50 border border-orange-100 flex gap-3 shadow-sm h-fit">
                           <Info className="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
                           <div className="space-y-1">
                             <p className="text-[10px] font-black text-orange-700 uppercase tracking-widest">運營備注</p>
@@ -336,7 +366,7 @@ export default function KnowledgeBasePage() {
                       )}
 
                       {faq.answer_en && (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                           <Button 
                             variant="ghost" 
                             size="sm" 
@@ -348,11 +378,11 @@ export default function KnowledgeBasePage() {
                           </Button>
                           
                           {showEnglish[faq.id] && (
-                            <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 flex gap-3 shadow-sm animate-in slide-in-from-top-1 duration-300">
+                            <div className="p-5 rounded-xl bg-blue-50/30 border border-blue-100 flex gap-4 shadow-sm animate-in slide-in-from-top-2 duration-300">
                               <Globe className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-                              <div className="space-y-1">
+                              <div className="space-y-1.5">
                                 <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest">English Reply</p>
-                                <p className="text-sm text-blue-800/90 leading-relaxed italic">{faq.answer_en}</p>
+                                <p className="text-sm text-blue-800/90 leading-relaxed italic font-medium">{faq.answer_en}</p>
                               </div>
                             </div>
                           )}
@@ -374,9 +404,11 @@ export default function KnowledgeBasePage() {
                           </Button>
                         )}
                         {faq.linked_template && (
-                          <Button variant="outline" size="sm" className="h-9 px-4 font-bold border-purple-200 text-purple-700 hover:bg-purple-50">
-                            <Mail className="mr-2 h-4 w-4" />
-                            使用郵件模板
+                          <Button asChild variant="outline" size="sm" className="h-9 px-4 font-bold border-purple-200 text-purple-700 hover:bg-purple-50">
+                            <Link to={`/templates?id=${faq.linked_template}`}>
+                              <Mail className="mr-2 h-4 w-4" />
+                              使用郵件模板
+                            </Link>
                           </Button>
                         )}
                       </div>

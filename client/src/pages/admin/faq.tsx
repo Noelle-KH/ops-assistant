@@ -52,6 +52,7 @@ export default function AdminFaqPage() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [currentFaq, setCurrentFaq] = useState<Partial<FAQItem> | null>(null);
+  const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
     fetchFaqs();
@@ -76,6 +77,12 @@ export default function AdminFaqPage() {
       return;
     }
 
+    // Process tags: support both English (,) and Chinese (，) commas
+    const processedTags = tagInput
+      .split(/[，,]/)
+      .map(t => t.trim())
+      .filter(Boolean);
+
     const admin = localStorage.getItem("admin_user") || "Admin";
     let updatedFaqs = [...faqs];
     const now = new Date().toISOString().split('T')[0];
@@ -83,14 +90,14 @@ export default function AdminFaqPage() {
     if (currentFaq.id) {
       // Update
       updatedFaqs = updatedFaqs.map(f => 
-        f.id === currentFaq.id ? { ...f, ...currentFaq, updated_at: now } as FAQItem : f
+        f.id === currentFaq.id ? { ...f, ...currentFaq, tags: processedTags, updated_at: now } as FAQItem : f
       );
     } else {
       // Create
       const newFaq: FAQItem = {
         ...currentFaq as any,
         id: `faq_${Date.now()}`,
-        tags: currentFaq.tags || [],
+        tags: processedTags,
         status: "active",
         updated_at: now
       };
@@ -108,6 +115,7 @@ export default function AdminFaqPage() {
         setFaqs(updatedFaqs);
         setIsEditing(false);
         setCurrentFaq(null);
+        setTagInput("");
         toast.success(currentFaq.id ? "FAQ 已更新" : "FAQ 已建立");
       } else {
         throw new Error();
@@ -163,6 +171,7 @@ export default function AdminFaqPage() {
         <Button 
           onClick={() => {
             setCurrentFaq({ category: "開戶", tags: [] });
+            setTagInput("");
             setIsEditing(true);
           }}
           className="rounded-xl font-bold shadow-lg shadow-primary/20"
@@ -211,6 +220,7 @@ export default function AdminFaqPage() {
                       className="h-8 w-8 text-slate-400 hover:text-primary"
                       onClick={() => {
                         setCurrentFaq(faq);
+                        setTagInput(faq.tags.join(", "));
                         setIsEditing(true);
                       }}
                     >
@@ -274,11 +284,8 @@ export default function AdminFaqPage() {
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">標籤 (以逗號分隔)</Label>
                 <Input 
                   placeholder="如: 開戶, 年齡, 審核"
-                  value={currentFaq?.tags?.join(", ") || ""}
-                  onChange={(e) => setCurrentFaq(prev => ({ 
-                    ...prev!, 
-                    tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean) 
-                  }))}
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
                   className="rounded-xl"
                 />
               </div>

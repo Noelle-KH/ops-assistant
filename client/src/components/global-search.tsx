@@ -69,39 +69,43 @@ export function GlobalSearch({ open, onOpenChange }: { open: boolean, onOpenChan
 
     // Search FAQs
     data.faqs.forEach(f => {
-      if (f.question.toLowerCase().includes(q) || f.tags.some((t: string) => t.toLowerCase().includes(q))) {
+      const content = `${f.question} ${f.answer} ${f.ops_note || ""} ${f.tags.join(" ")}`.toLowerCase();
+      if (content.includes(q)) {
         searchResults.push({
           id: f.id,
           title: f.question,
           type: "FAQ",
           category: f.category,
-          path: `/knowledge-base/faq/${f.id}`
+          path: `/knowledge-base?id=${f.id}&type=faq`
         });
       }
     });
 
     // Search SOPs
     data.sops.forEach(s => {
-      if (s.title.toLowerCase().includes(q) || s.tags.some((t: string) => t.toLowerCase().includes(q))) {
+      const content = `${s.title} ${s.rule?.description || ""} ${s.tags.join(" ")}`.toLowerCase();
+      if (content.includes(q)) {
         searchResults.push({
           id: s.id,
           title: s.title,
           type: "SOP",
           category: s.category,
-          path: `/knowledge-base/sop/${s.id}`
+          path: `/knowledge-base?id=${s.id}&type=sop`
         });
       }
     });
 
     // Search Templates
     data.templates.forEach(t => {
-      if (t.title.toLowerCase().includes(q) || t.tags.some((t: string) => t.toLowerCase().includes(q))) {
+      const variantsContent = t.variants.map((v: any) => `${v.label} ${v.body}`).join(" ");
+      const content = `${t.title} ${variantsContent} ${t.tags.join(" ")}`.toLowerCase();
+      if (content.includes(q)) {
         searchResults.push({
           id: t.id,
           title: t.title,
           type: "Template",
           category: t.category,
-          path: `/templates` // Currently no detail page for templates, just jump to list
+          path: `/templates?id=${t.id}`
         });
       }
     });

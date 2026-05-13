@@ -259,8 +259,8 @@ export default function AdminTemplatesPage() {
       </ScrollArea>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0 rounded-2xl border-none">
-          <DialogHeader className="p-6 border-b bg-slate-50/50">
+        <DialogContent className="max-w-5xl h-[90vh] overflow-hidden flex flex-col p-0 rounded-2xl border-none">
+          <DialogHeader className="p-6 border-b bg-slate-50/50 shrink-0">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-black flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
@@ -289,192 +289,194 @@ export default function AdminTemplatesPage() {
             </div>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 p-8">
-            {activeStep === "basic" && currentTpl && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300 max-w-2xl mx-auto">
-                <div className="grid grid-cols-2 gap-6">
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="p-8">
+              {activeStep === "basic" && currentTpl && (
+                <div className="space-y-8 animate-in slide-in-from-right-4 duration-300 max-w-2xl mx-auto">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">模板標題</Label>
+                      <Input 
+                        placeholder="如: 取款進度回覆" 
+                        className="h-11 rounded-xl font-bold"
+                        value={currentTpl.title}
+                        onChange={e => setCurrentTpl({...currentTpl, title: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">分類</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {CATEGORIES.map(cat => (
+                          <button
+                            key={cat}
+                            onClick={() => setCurrentTpl({...currentTpl, category: cat})}
+                            className={cn(
+                              "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all",
+                              currentTpl.category === cat ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:border-primary/50"
+                            )}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">模板標題</Label>
+                    <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">標籤 (以逗號分隔)</Label>
                     <Input 
-                      placeholder="如: 取款進度回覆" 
-                      className="h-11 rounded-xl font-bold"
-                      value={currentTpl.title}
-                      onChange={e => setCurrentTpl({...currentTpl, title: e.target.value})}
+                      placeholder="如: 取款, 安撫, 進度"
+                      value={currentTpl.tags?.join(", ")}
+                      onChange={e => setCurrentTpl({...currentTpl, tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean)})}
+                      className="rounded-xl"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">分類</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {CATEGORIES.map(cat => (
-                        <button
-                          key={cat}
-                          onClick={() => setCurrentTpl({...currentTpl, category: cat})}
-                          className={cn(
-                            "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all",
-                            currentTpl.category === cat ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:border-primary/50"
-                          )}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <AssociationSelector 
+                      type="faq"
+                      label="關聯 FAQ"
+                      maxSelections={1}
+                      selectedIds={currentTpl.linked_faq ? [currentTpl.linked_faq] : []}
+                      onChange={(ids) => setCurrentTpl({...currentTpl, linked_faq: ids[0] || ""})}
+                    />
+                    <AssociationSelector 
+                      type="sop"
+                      label="關聯 SOP"
+                      maxSelections={1}
+                      selectedIds={currentTpl.linked_sop ? [currentTpl.linked_sop] : []}
+                      onChange={(ids) => setCurrentTpl({...currentTpl, linked_sop: ids[0] || ""})}
+                    />
                   </div>
                 </div>
+              )}
 
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">標籤 (以逗號分隔)</Label>
-                  <Input 
-                    placeholder="如: 取款, 安撫, 進度"
-                    value={currentTpl.tags?.join(", ")}
-                    onChange={e => setCurrentTpl({...currentTpl, tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean)})}
-                    className="rounded-xl"
-                  />
-                </div>
+              {activeStep === "variants" && currentTpl && (
+                <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">內容版本 (Variants)</p>
+                    <Button size="sm" variant="outline" className="rounded-lg h-8 font-bold" onClick={addVariant}>
+                      <Plus className="mr-2 h-3.5 w-3.5" /> 增加新版本
+                    </Button>
+                  </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <AssociationSelector 
-                    type="faq"
-                    label="關聯 FAQ"
-                    maxSelections={1}
-                    selectedIds={currentTpl.linked_faq ? [currentTpl.linked_faq] : []}
-                    onChange={(ids) => setCurrentTpl({...currentTpl, linked_faq: ids[0] || ""})}
-                  />
-                  <AssociationSelector 
-                    type="sop"
-                    label="關聯 SOP"
-                    maxSelections={1}
-                    selectedIds={currentTpl.linked_sop ? [currentTpl.linked_sop] : []}
-                    onChange={(ids) => setCurrentTpl({...currentTpl, linked_sop: ids[0] || ""})}
-                  />
-                </div>
-              </div>
-            )}
+                  <div className="space-y-8">
+                    {currentTpl.variants?.map((variant, vIdx) => (
+                      <div key={variant.variant_id} className="p-6 rounded-2xl border border-slate-100 bg-slate-50/30 space-y-6 relative group">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="absolute top-2 right-2 h-8 w-8 text-slate-300 hover:text-red-500" 
+                          onClick={() => removeVariant(vIdx)}
+                          disabled={currentTpl.variants!.length <= 1}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
 
-            {activeStep === "variants" && currentTpl && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-                <div className="flex justify-between items-center">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">內容版本 (Variants)</p>
-                  <Button size="sm" variant="outline" className="rounded-lg h-8 font-bold" onClick={addVariant}>
-                    <Plus className="mr-2 h-3.5 w-3.5" /> 增加新版本
-                  </Button>
-                </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-slate-400">版本標籤 (Label)</Label>
+                            <Input 
+                              value={variant.label}
+                              onChange={e => {
+                                const updated = [...currentTpl.variants!];
+                                updated[vIdx].label = e.target.value;
+                                setCurrentTpl({...currentTpl, variants: updated});
+                              }}
+                              className="bg-white rounded-xl font-bold"
+                              placeholder="如: 標準型, 告知型..."
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-slate-400">適用情境描述</Label>
+                            <Input 
+                              value={variant.description}
+                              onChange={e => {
+                                const updated = [...currentTpl.variants!];
+                                updated[vIdx].description = e.target.value;
+                                setCurrentTpl({...currentTpl, variants: updated});
+                              }}
+                              className="bg-white rounded-xl"
+                              placeholder="描述此版本適用於什麼樣的客戶或情境..."
+                            />
+                          </div>
+                        </div>
 
-                <div className="space-y-8">
-                  {currentTpl.variants?.map((variant, vIdx) => (
-                    <div key={variant.variant_id} className="p-6 rounded-2xl border border-slate-100 bg-slate-50/30 space-y-6 relative group">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="absolute top-2 right-2 h-8 w-8 text-slate-300 hover:text-red-500" 
-                        onClick={() => removeVariant(vIdx)}
-                        disabled={currentTpl.variants!.length <= 1}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-
-                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase text-slate-400">版本標籤 (Label)</Label>
-                          <Input 
-                            value={variant.label}
+                          <div className="flex justify-between items-center">
+                            <Label className="text-[10px] font-black uppercase text-slate-400">郵件內文 (Body)</Label>
+                            <span className="text-[9px] text-slate-400 font-bold bg-slate-100 px-1.5 py-0.5 rounded">變數請使用 {"{{KEY}}"} 格式</span>
+                          </div>
+                          <Textarea 
+                            value={variant.body}
                             onChange={e => {
                               const updated = [...currentTpl.variants!];
-                              updated[vIdx].label = e.target.value;
+                              updated[vIdx].body = e.target.value;
                               setCurrentTpl({...currentTpl, variants: updated});
                             }}
-                            className="bg-white rounded-xl font-bold"
-                            placeholder="如: 標準型, 告知型..."
+                            className="bg-white rounded-xl text-sm min-h-[150px] leading-relaxed"
+                            placeholder="您好！關於您的帳戶 {{ACCOUNT}}..."
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase text-slate-400">適用情境描述</Label>
-                          <Input 
-                            value={variant.description}
-                            onChange={e => {
-                              const updated = [...currentTpl.variants!];
-                              updated[vIdx].description = e.target.value;
-                              setCurrentTpl({...currentTpl, variants: updated});
-                            }}
-                            className="bg-white rounded-xl"
-                            placeholder="描述此版本適用於什麼樣的客戶或情境..."
-                          />
-                        </div>
-                      </div>
 
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <Label className="text-[10px] font-black uppercase text-slate-400">郵件內文 (Body)</Label>
-                          <span className="text-[9px] text-slate-400 font-bold bg-slate-100 px-1.5 py-0.5 rounded">變數請使用 {"{{KEY}}"} 格式</span>
-                        </div>
-                        <Textarea 
-                          value={variant.body}
-                          onChange={e => {
-                            const updated = [...currentTpl.variants!];
-                            updated[vIdx].body = e.target.value;
-                            setCurrentTpl({...currentTpl, variants: updated});
-                          }}
-                          className="bg-white rounded-xl text-sm min-h-[150px] leading-relaxed"
-                          placeholder="您好！關於您的帳戶 {{ACCOUNT}}..."
-                        />
-                      </div>
-
-                      <div className="space-y-4 pt-4 border-t border-slate-100">
-                        <div className="flex justify-between items-center">
-                          <Label className="text-[10px] font-black uppercase text-primary">變數欄位定義 (Fields)</Label>
-                          <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] hover:text-primary" onClick={() => addField(vIdx)}>+ 增加變數</Button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                          {variant.fields.map((field, fIdx) => (
-                            <div key={fIdx} className="bg-white p-3 rounded-xl border border-slate-100 space-y-3 relative group/field">
-                              <button 
-                                onClick={() => removeField(vIdx, fIdx)}
-                                className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-300 hover:text-red-500 shadow-sm opacity-0 group-hover/field:opacity-100 transition-opacity"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                              <div className="space-y-1">
-                                <Label className="text-[9px] font-black uppercase text-slate-400">Key (需與 Body 內對應)</Label>
-                                <Input 
-                                  value={field.key}
-                                  onChange={e => {
-                                    const updated = [...currentTpl.variants!];
-                                    updated[vIdx].fields[fIdx].key = e.target.value;
-                                    setCurrentTpl({...currentTpl, variants: updated});
-                                  }}
-                                  className="h-8 text-[11px] rounded-lg bg-slate-50/50 border-none font-mono"
-                                  placeholder="如: ACCOUNT"
-                                />
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                          <div className="flex justify-between items-center">
+                            <Label className="text-[10px] font-black uppercase text-primary">變數欄位定義 (Fields)</Label>
+                            <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] hover:text-primary" onClick={() => addField(vIdx)}>+ 增加變數</Button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {variant.fields.map((field, fIdx) => (
+                              <div key={fIdx} className="bg-white p-3 rounded-xl border border-slate-100 space-y-3 relative group/field">
+                                <button 
+                                  onClick={() => removeField(vIdx, fIdx)}
+                                  className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-300 hover:text-red-500 shadow-sm opacity-0 group-hover/field:opacity-100 transition-opacity"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                                <div className="space-y-1">
+                                  <Label className="text-[9px] font-black uppercase text-slate-400">Key (需與 Body 內對應)</Label>
+                                  <Input 
+                                    value={field.key}
+                                    onChange={e => {
+                                      const updated = [...currentTpl.variants!];
+                                      updated[vIdx].fields[fIdx].key = e.target.value;
+                                      setCurrentTpl({...currentTpl, variants: updated});
+                                    }}
+                                    className="h-8 text-[11px] rounded-lg bg-slate-50/50 border-none font-mono"
+                                    placeholder="如: ACCOUNT"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-[9px] font-black uppercase text-slate-400">顯示標籤 (Label)</Label>
+                                  <Input 
+                                    value={field.label}
+                                    onChange={e => {
+                                      const updated = [...currentTpl.variants!];
+                                      updated[vIdx].fields[fIdx].label = e.target.value;
+                                      setCurrentTpl({...currentTpl, variants: updated});
+                                    }}
+                                    className="h-8 text-[11px] rounded-lg border-slate-100"
+                                    placeholder="如: MT4 帳號"
+                                  />
+                                </div>
                               </div>
-                              <div className="space-y-1">
-                                <Label className="text-[9px] font-black uppercase text-slate-400">顯示標籤 (Label)</Label>
-                                <Input 
-                                  value={field.label}
-                                  onChange={e => {
-                                    const updated = [...currentTpl.variants!];
-                                    updated[vIdx].fields[fIdx].label = e.target.value;
-                                    setCurrentTpl({...currentTpl, variants: updated});
-                                  }}
-                                  className="h-8 text-[11px] rounded-lg border-slate-100"
-                                  placeholder="如: MT4 帳號"
-                                />
+                            ))}
+                            {variant.fields.length === 0 && (
+                              <div className="col-span-full py-4 text-center border-2 border-dashed border-slate-100 rounded-xl text-[10px] text-slate-400 font-bold">
+                                無變數欄位
                               </div>
-                            </div>
-                          ))}
-                          {variant.fields.length === 0 && (
-                            <div className="col-span-full py-4 text-center border-2 border-dashed border-slate-100 rounded-xl text-[10px] text-slate-400 font-bold">
-                              無變數欄位
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </ScrollArea>
+              )}
+            </div>
+          </div>
 
-          <DialogFooter className="p-6 border-t bg-slate-50/50 gap-4">
+          <DialogFooter className="p-6 border-t bg-slate-50/50 gap-4 shrink-0">
             <div className="flex-1 flex gap-2">
               {activeStep !== "basic" && (
                 <Button variant="outline" className="rounded-xl font-bold" onClick={() => setActiveStep("basic")}>

@@ -21,6 +21,8 @@ import AdminFaqPage from "@/pages/admin/faq"
 import AdminSopPage from "@/pages/admin/sop"
 import AdminTemplatesPage from "@/pages/admin/templates"
 import AdminUsersPage from "@/pages/admin/users"
+import AdminGroupsPage from "@/pages/admin/groups"
+import AdminToolsPage from "@/pages/admin/tools"
 import AdminAuditPage from "@/pages/admin/audit"
 import { AdminLayout } from "@/components/admin-layout"
 import { AuthGuard } from "@/components/auth-guard"
@@ -74,6 +76,8 @@ function App() {
             <Route path="faq" element={<AdminFaqPage />} />
             <Route path="sop" element={<AdminSopPage />} />
             <Route path="templates" element={<AdminTemplatesPage />} />
+            <Route path="groups" element={<AdminGroupsPage />} />
+            <Route path="tools" element={<AdminToolsPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="audit" element={<AdminAuditPage />} />
           </Route>

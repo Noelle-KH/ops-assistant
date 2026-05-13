@@ -14,7 +14,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface TemplateField {
@@ -54,6 +54,7 @@ export default function TemplatesPage() {
   const [expandedTpl, setExpandedTpl] = useState<string | null>(null);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
   
   // Warning Dialog State
   const [isWarningOpen, setIsWarningOpen] = useState(false);
@@ -65,15 +66,29 @@ export default function TemplatesPage() {
       .then(data => {
         setTemplates(data);
         setLoading(false);
+        
+        // Handle direct linking via ID
+        const targetId = searchParams.get("id");
+        if (targetId) {
+          const target = data.find((t: EmailTemplate) => t.id === targetId);
+          if (target && target.variants.length > 0) {
+            setExpandedTpl(target.variants[0].variant_id);
+          }
+        }
       })
       .catch(err => {
         console.error("Failed to fetch templates:", err);
         setLoading(false);
       });
-  }, []);
+  }, [searchParams]);
 
   const filteredTemplates = templates.filter(tpl => {
     if (tpl.status === "disabled") return false;
+    
+    // If an ID is provided in URL, show only that template
+    const targetId = searchParams.get("id");
+    if (targetId) return tpl.id === targetId;
+
     const matchesSearch = 
       tpl.title.toLowerCase().includes(search.toLowerCase()) ||
       tpl.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()));
@@ -112,10 +127,10 @@ export default function TemplatesPage() {
               <span 
                 key={`${field.key}-${index}`} 
                 className={cn(
-                  "px-1.5 py-0.5 rounded-md font-bold text-[0.95em] transition-all mx-0.5",
+                  "px-2 py-0.5 rounded-lg font-black text-[1.05em] transition-all mx-0.5 shadow-sm",
                   value 
-                    ? "bg-primary/10 text-primary border border-primary/20" 
-                    : "bg-amber-100 text-amber-700 border border-amber-200 animate-pulse"
+                    ? "bg-primary text-white border-2 border-primary/20 scale-105" 
+                    : "bg-amber-100 text-amber-700 border-2 border-amber-300 animate-pulse"
                 )}
               >
                 {value || placeholder}
@@ -312,12 +327,12 @@ export default function TemplatesPage() {
                   {(tpl.linked_faq || tpl.linked_sop) && (
                     <div className="flex gap-4 pt-2 border-t border-slate-50">
                       {tpl.linked_faq && (
-                        <Link to={`/knowledge-base?search=${tpl.linked_faq}`} className="text-[10px] font-bold text-slate-500 flex items-center gap-1.5 hover:text-primary transition-colors">
+                        <Link to={`/knowledge-base?id=${tpl.linked_faq}&type=faq`} className="text-[10px] font-bold text-slate-500 flex items-center gap-1.5 hover:text-primary transition-colors">
                           <Info className="h-3 w-3" /> 查看相關 FAQ
                         </Link>
                       )}
                       {tpl.linked_sop && (
-                        <Link to={`/knowledge-base?search=${tpl.linked_sop}`} className="text-[10px] font-bold text-slate-500 flex items-center gap-1.5 hover:text-primary transition-colors">
+                        <Link to={`/knowledge-base?id=${tpl.linked_sop}&type=sop`} className="text-[10px] font-bold text-slate-500 flex items-center gap-1.5 hover:text-primary transition-colors">
                           <ExternalLink className="h-3 w-3" /> 查看相關 SOP
                         </Link>
                       )}
