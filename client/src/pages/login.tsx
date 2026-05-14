@@ -72,7 +72,7 @@ export default function LoginPage() {
           </div>
           <div className="space-y-1">
             <CardTitle className="text-3xl font-black tracking-tight text-slate-900">領航站系統</CardTitle>
-            <CardDescription className="font-bold text-slate-500">IEXS 運營知識管理與工具平台</CardDescription>
+            <CardDescription className="font-bold text-slate-500">企業運營知識管理與工具平台</CardDescription>
           </div>
         </CardHeader>
         <CardContent>

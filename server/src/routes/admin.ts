@@ -91,7 +91,7 @@ router.post('/update/:type', async (req, res) => {
             
             // If it's a new user (not in old database) and no password provided, use default
             if (!passwordToHash && !isExistingUser) {
-              passwordToHash = "Iexs123456";
+              passwordToHash = "Admin123456";
             }
             
             // If password is not yet hashed, hash it

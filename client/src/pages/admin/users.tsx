@@ -326,7 +326,7 @@ export default function AdminUsersPage() {
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">安全提醒</p>
                   <p className="text-[10px] font-bold text-amber-700/80 leading-relaxed">
-                    初始密碼預設為 <span className="text-amber-900 underline decoration-2">Iexs123456</span>。
+                    初始密碼預設為 <span className="text-amber-900 underline decoration-2">Admin123456</span>。
                   </p>
                 </div>
               </div>
