@@ -271,7 +271,7 @@ export default function KnowledgeBasePage() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto flex flex-col h-[calc(100vh-8rem)] gap-6">
+    <div className="flex flex-col h-[calc(100vh-12rem)] gap-6">
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div>

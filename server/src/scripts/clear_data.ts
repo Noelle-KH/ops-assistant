@@ -43,9 +43,11 @@ async function clearData() {
     await db.insert(users).values({
       id: "u_admin",
       username: "admin",
+      displayName: "系統管理員",
       password: hashedPassword,
       role: "admin",
-      status: "active"
+      status: "active",
+      createdAt: new Date().toISOString().split('T')[0]
     });
     console.log("✅ Users reset. Default admin created (admin / admin123).");
 

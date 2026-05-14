@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 
 export const faqs = sqliteTable("faqs", {
   id: text("id").primaryKey(),
@@ -92,9 +93,12 @@ export const tools = sqliteTable("tools", {
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
+  displayName: text("display_name").notNull().default("使用者"),
   password: text("password").notNull(),
   role: text("role").notNull(), // admin, high-level, operator
   status: text("status").notNull().default("active"),
+  lastLogin: text("last_login"),
+  createdAt: text("created_at").notNull().default("2026-05-14"),
 });
 
 export const auditLogs = sqliteTable("audit_logs", {

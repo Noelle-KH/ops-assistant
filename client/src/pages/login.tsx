@@ -35,17 +35,17 @@ export default function LoginPage() {
 
       if (res.ok) {
         localStorage.setItem("user_token", result.token);
-        localStorage.setItem("user_name", result.user.name || result.user.username);
+        localStorage.setItem("user_name", result.user.displayName || result.user.username);
         localStorage.setItem("user_role", result.user.role);
         localStorage.setItem("last_activity", Date.now().toString());
         
         // Also set admin info if they are admin, to keep compatibility with existing admin pages
         if (result.user.role === "admin") {
           localStorage.setItem("admin_token", result.token);
-          localStorage.setItem("admin_user", result.user.name || result.user.username);
+          localStorage.setItem("admin_user", result.user.displayName || result.user.username);
         }
 
-        toast.success(`登入成功，歡迎 ${result.user.name || result.user.username}`);
+        toast.success(`登入成功，歡迎 ${result.user.displayName || result.user.username}`);
         
         // Redirect to where they were going, or dashboard
         const from = (location.state as any)?.from?.pathname || "/";

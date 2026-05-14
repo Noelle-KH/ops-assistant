@@ -24,9 +24,9 @@ export default function AdminLoginPage() {
 
       if (res.ok) {
         localStorage.setItem("admin_token", "fake_token_active"); // Future: use JWT
-        localStorage.setItem("admin_user", result.user.username);
+        localStorage.setItem("admin_user", result.user.displayName || result.user.username);
         localStorage.setItem("user_role", result.user.role);
-        toast.success(`登入成功，歡迎 ${result.user.username}`);
+        toast.success(`登入成功，歡迎 ${result.user.displayName || result.user.username}`);
         navigate("/admin/dashboard");
       } else {
         toast.error(result.error || "帳號或密碼錯誤");

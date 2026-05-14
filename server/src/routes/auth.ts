@@ -30,7 +30,7 @@ router.post('/login', async (req, res) => {
       { 
         username: user.username, 
         role: user.role,
-        name: user.name 
+        name: user.displayName 
       }, 
       JWT_SECRET, 
       { expiresIn: '24h' }
