@@ -18,19 +18,18 @@
     },
     {
       "src": "/assets/(.*)",
-      "dest": "client/assets/$1"
+      "dest": "client/dist/assets/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "client/$1",
-      "check": true
+      "dest": "client/dist/$1"
     },
     {
       "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "client/index.html"
+      "dest": "client/dist/index.html"
     }
   ]
 }
