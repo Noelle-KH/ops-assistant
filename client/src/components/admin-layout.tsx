@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { 
   LayoutDashboard, 
   FileText, 
+  BookOpen, 
   Mail, 
   Settings, 
   LogOut, 
@@ -11,7 +12,7 @@ import {
   MessageSquare,
   Wrench,
   UserCog
-  } from "lucide-react";
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
