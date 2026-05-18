@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
+import { API_BASE_URL } from "@/lib/utils";
 
 interface AccountItem {
   role: string;
@@ -22,8 +23,6 @@ interface ToolItem {
   desc: string;
   accounts?: AccountItem[];
 }
-
-const API_BASE_URL = "http://localhost:3001";
 
 export default function ToolsPage() {
   const [tools, setTools] = useState<ToolItem[]>([]);
@@ -81,6 +80,10 @@ export default function ToolsPage() {
     setCopiedKey(key);
     toast.success("已複製到剪貼簿");
     setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const togglePassword = (accId: string) => {
+    setShowPasswords(prev => ({ ...prev, [accId]: !prev[accId] }));
   };
 
   const categories = ["後台系統", "測試資源", "敏感資源"];
@@ -182,7 +185,7 @@ export default function ToolsPage() {
                                         </div>
                                         <Button 
                                           variant="ghost" 
-                                          size="icon-xs" 
+                                          size="icon" 
                                           className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity"
                                           onClick={() => handleCopy(acc.username, `${accId}-u`)}
                                         >
@@ -200,7 +203,7 @@ export default function ToolsPage() {
                                         <div className="flex gap-1 shrink-0">
                                           <Button 
                                             variant="ghost" 
-                                            size="icon-xs" 
+                                            size="icon" 
                                             className="h-6 w-6"
                                             onClick={() => togglePassword(accId)}
                                           >
@@ -208,7 +211,7 @@ export default function ToolsPage() {
                                           </Button>
                                           <Button 
                                             variant="ghost" 
-                                            size="icon-xs" 
+                                            size="icon" 
                                             className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity"
                                             onClick={() => handleCopy(acc.password, `${accId}-p`)}
                                           >

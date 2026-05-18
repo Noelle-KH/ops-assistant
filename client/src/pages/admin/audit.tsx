@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, API_BASE_URL } from "@/lib/utils";
 
 interface AuditLog {
   timestamp: string;
@@ -24,12 +24,13 @@ interface AuditLog {
   action: string;
   target: string;
   details: {
+    total_count?: number;
     count?: number;
-    [key: string]: any;
+    added?: unknown[];
+    modified?: unknown[];
+    deleted?: unknown[];
   };
 }
-
-const API_BASE_URL = "http://localhost:3001";
 
 export default function AdminAuditPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -37,22 +38,22 @@ export default function AdminAuditPage() {
   const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
-  useEffect(() => {
-    fetchLogs();
-  }, []);
-
   const fetchLogs = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/audit`);
       const data = await res.json();
       setLogs(data);
-    } catch (err) {
+    } catch (_err) {
       toast.error("無法載入稽核日誌");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void fetchLogs();
+  }, []);
 
   const filteredLogs = logs.filter(log => 
     log.admin.toLowerCase().includes(search.toLowerCase()) ||
@@ -176,21 +177,21 @@ export default function AdminAuditPage() {
                           <span className="text-[10px] font-bold text-slate-400">
                             總數: {log.details.total_count || log.details.count}
                           </span>
-                          {(log.details.added?.length > 0 || log.details.modified?.length > 0 || log.details.deleted?.length > 0) && (
+                          {( (log.details.added?.length || 0) > 0 || (log.details.modified?.length || 0) > 0 || (log.details.deleted?.length || 0) > 0) && (
                             <div className="flex gap-1">
-                              {log.details.added?.length > 0 && (
+                              {(log.details.added?.length || 0) > 0 && (
                                 <Badge variant="outline" className="text-[9px] h-4 px-1 border-emerald-200 text-emerald-600 bg-emerald-50 font-bold">
-                                  +{log.details.added.length}
+                                  +{log.details.added?.length}
                                 </Badge>
                               )}
-                              {log.details.modified?.length > 0 && (
+                              {(log.details.modified?.length || 0) > 0 && (
                                 <Badge variant="outline" className="text-[9px] h-4 px-1 border-blue-200 text-blue-600 bg-blue-50 font-bold">
-                                  ~{log.details.modified.length}
+                                  ~{log.details.modified?.length}
                                 </Badge>
                               )}
-                              {log.details.deleted?.length > 0 && (
+                              {(log.details.deleted?.length || 0) > 0 && (
                                 <Badge variant="outline" className="text-[9px] h-4 px-1 border-rose-200 text-rose-600 bg-rose-50 font-bold">
-                                  -{log.details.deleted.length}
+                                  -{log.details.deleted?.length}
                                 </Badge>
                               )}
                             </div>

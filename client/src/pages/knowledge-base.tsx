@@ -14,8 +14,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { API_BASE_URL } from "@/lib/utils";
 
-// --- Interfaces ---
+  // --- Interfaces ---
 interface FAQItem {
   id: string;
   category: string;
@@ -52,7 +53,6 @@ interface SOPItem {
 
 // --- Constants ---
 const FAQ_CATEGORIES = ["全部", "開戶", "交易帳戶", "入金", "出金", "交易", "代理", "活動"];
-const API_BASE_URL = "http://localhost:3001";
 
 export default function KnowledgeBasePage() {
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
@@ -75,49 +75,49 @@ export default function KnowledgeBasePage() {
   // Accordion State
   const [expandedFaq, setExpandedFaq] = useState<string | undefined>(undefined);
 
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [faqRes, sopRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/faq`),
+        fetch(`${API_BASE_URL}/api/sop`)
+      ]);
+      const faqData = await faqRes.json();
+      const sopData = await sopRes.json();
+      
+      setFaqs(faqData);
+      const activeSops = sopData.filter((s: SOPItem) => s.status !== "disabled");
+      setSops(activeSops);
+
+      // 1. Handle direct SOP path linking (from routes)
+      if (params.id) {
+        const foundSop = activeSops.find((s: SOPItem) => s.id === params.id);
+        if (foundSop) {
+          setActiveSop(foundSop);
+          setIsDialogOpen(true);
+        }
+      }
+
+      // 2. Handle Search Params linking (from templates/other)
+      if (targetId && targetType === "sop") {
+        const foundSop = activeSops.find((s: SOPItem) => s.id === targetId);
+        if (foundSop) {
+          setActiveSop(foundSop);
+          setIsDialogOpen(true);
+        }
+      } else if (targetId && targetType === "faq") {
+        setExpandedFaq(targetId);
+      }
+
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch FAQs & SOPs
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [faqRes, sopRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/faq`),
-          fetch(`${API_BASE_URL}/api/sop`)
-        ]);
-        const faqData = await faqRes.json();
-        const sopData = await sopRes.json();
-        
-        setFaqs(faqData);
-        const activeSops = sopData.filter((s: SOPItem) => s.status !== "disabled");
-        setSops(activeSops);
-
-        // 1. Handle direct SOP path linking (from routes)
-        if (params.id) {
-          const foundSop = activeSops.find((s: SOPItem) => s.id === params.id);
-          if (foundSop) {
-            setActiveSop(foundSop);
-            setIsDialogOpen(true);
-          }
-        }
-
-        // 2. Handle Search Params linking (from templates/other)
-        if (targetId && targetType === "sop") {
-          const foundSop = activeSops.find((s: SOPItem) => s.id === targetId);
-          if (foundSop) {
-            setActiveSop(foundSop);
-            setIsDialogOpen(true);
-          }
-        } else if (targetId && targetType === "faq") {
-          setExpandedFaq(targetId);
-        }
-
-      } catch (err) {
-        console.error("Failed to fetch data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, [params.id, targetId, targetType]);
 

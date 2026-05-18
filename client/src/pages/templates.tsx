@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Link, useSearchParams } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { cn, API_BASE_URL } from "@/lib/utils";
 
 interface TemplateField {
   key: string;
@@ -44,7 +44,6 @@ interface EmailTemplate {
 }
 
 const CATEGORIES = ["全部", "取款類", "帳戶變更類", "開戶類", "審查類", "其他"];
-const API_BASE_URL = "http://localhost:3001";
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -106,10 +105,10 @@ export default function TemplatesPage() {
   };
 
   const renderProcessedBody = (body: string, fields: TemplateField[]) => {
-    let parts: (string | JSX.Element)[] = [body];
+    let parts: (string | React.ReactNode)[] = [body];
     
     fields.forEach(field => {
-      const newParts: (string | JSX.Element)[] = [];
+      const newParts: (string | React.ReactNode)[] = [];
       const placeholder = `{{${field.key}}}`;
       const value = fieldValues[field.key];
 

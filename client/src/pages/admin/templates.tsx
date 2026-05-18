@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, API_BASE_URL } from "@/lib/utils";
 import { AssociationSelector } from "@/components/association-selector";
 
 interface TemplateField {
@@ -59,7 +59,6 @@ interface EmailTemplate {
 }
 
 const CATEGORIES = ["取款類", "帳戶變更類", "開戶類", "審查類", "其他"];
-const API_BASE_URL = "http://localhost:3001";
 
 export default function AdminTemplatesPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -69,22 +68,22 @@ export default function AdminTemplatesPage() {
   const [currentTpl, setCurrentTpl] = useState<Partial<EmailTemplate> | null>(null);
   const [activeStep, setActiveStep] = useState<"basic" | "variants">("basic");
 
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
-
   const fetchTemplates = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/templates`);
       const data = await res.json();
       setTemplates(data);
-    } catch (err) {
+    } catch {
       toast.error("無法載入模板資料");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
 
   const initNewTemplate = () => {
     setCurrentTpl({
@@ -139,7 +138,7 @@ export default function AdminTemplatesPage() {
         setCurrentTpl(null);
         toast.success("模板儲存成功");
       }
-    } catch (err) {
+    } catch {
       toast.error("儲存失敗");
     }
   };
@@ -148,7 +147,7 @@ export default function AdminTemplatesPage() {
     const admin = localStorage.getItem("admin_user") || "Admin";
     const updated = templates.map(t => {
       if (t.id === id) {
-        return { ...t, status: t.status === "active" ? "disabled" : "active" as any };
+        return { ...t, status: (t.status === "active" ? "disabled" : "active") as "active" | "disabled" };
       }
       return t;
     });
@@ -163,7 +162,7 @@ export default function AdminTemplatesPage() {
         setTemplates(updated);
         toast.info("狀態已更新");
       }
-    } catch (err) {
+    } catch {
       toast.error("操作失敗");
     }
   };

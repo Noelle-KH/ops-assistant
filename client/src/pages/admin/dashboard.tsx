@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, API_BASE_URL } from "@/lib/utils";
 
 interface Stats {
   faqs: number;
@@ -32,10 +32,10 @@ interface AuditLog {
   admin: string;
   action: string;
   target: string;
-  details: any;
+  details?: {
+    count?: number;
+  };
 }
-
-const API_BASE_URL = "http://localhost:3001";
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats>({
@@ -44,10 +44,6 @@ export default function AdminDashboardPage() {
   });
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -83,6 +79,10 @@ export default function AdminDashboardPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
   const STAT_CARDS = [
     { label: "FAQ 總數", value: stats.faqs, active: stats.activeFaqs, icon: BookOpen, color: "text-blue-500", bg: "bg-blue-50" },

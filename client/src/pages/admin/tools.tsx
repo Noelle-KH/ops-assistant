@@ -7,16 +7,11 @@ import {
   Trash2, 
   Save, 
   X, 
-  ExternalLink,
-  ShieldAlert,
-  Lock,
-  User,
-  Key
+  ShieldAlert
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import {
@@ -28,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, API_BASE_URL } from "@/lib/utils";
 
 interface AccountInfo {
   role: string;
@@ -47,7 +42,6 @@ interface ToolItem {
 }
 
 const CATEGORIES = ["後台系統", "測試資源", "敏感資源", "其他"];
-const API_BASE_URL = "http://localhost:3001";
 
 export default function AdminToolsPage() {
   const [tools, setTools] = useState<ToolItem[]>([]);
@@ -56,22 +50,22 @@ export default function AdminToolsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [currentTool, setCurrentTool] = useState<Partial<ToolItem> | null>(null);
 
-  useEffect(() => {
-    fetchTools();
-  }, []);
-
   const fetchTools = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/tools`);
       const data = await res.json();
       setTools(data);
-    } catch (err) {
+    } catch {
       toast.error("無法載入工具資料");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchTools();
+  }, []);
 
   const handleSave = async () => {
     if (!currentTool?.name || !currentTool?.category) {
@@ -102,7 +96,7 @@ export default function AdminToolsPage() {
         setCurrentTool(null);
         toast.success("工具資料已更新");
       }
-    } catch (err) {
+    } catch {
       toast.error("儲存失敗");
     }
   };
@@ -123,7 +117,7 @@ export default function AdminToolsPage() {
         setTools(updated);
         toast.success("工具已刪除");
       }
-    } catch (err) {
+    } catch {
       toast.error("刪除失敗");
     }
   };

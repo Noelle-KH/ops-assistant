@@ -1,19 +1,14 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { 
-  Megaphone, 
-  Info, 
   Plus, 
   Search, 
   Edit2, 
   Eye, 
   EyeOff, 
   Save, 
-  AlertCircle,
-  Calendar,
-  Type
+  AlertCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
+import { cn, API_BASE_URL } from "@/lib/utils"
 
 interface Announcement {
   id: string
@@ -45,8 +40,6 @@ interface Announcement {
   date: string
   status: "active" | "disabled"
 }
-
-const API_BASE_URL = "http://localhost:3001"
 
 const TYPES = [
   { value: "feature", label: "新功能", color: "bg-blue-500" },
@@ -69,27 +62,27 @@ export default function AdminAnnouncementsPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [currentAnn, setCurrentAnn] = useState<Partial<Announcement> | null>(null)
 
-  useEffect(() => {
-    fetchAnnouncements()
-  }, [])
-
   const fetchAnnouncements = async () => {
     setLoading(true)
     try {
       const res = await fetch(`${API_BASE_URL}/api/announcements`)
       const data = await res.json()
       // Ensure status field exists for older data
-      const normalizedData = data.map((item: any) => ({
+      const normalizedData = data.map((item: Announcement) => ({
         ...item,
         status: item.status || "active"
       }))
       setAnnouncements(normalizedData)
-    } catch (err) {
+    } catch (_err) {
       toast.error("無法載入公告資料")
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    void fetchAnnouncements()
+  }, [])
 
   const handleSave = async () => {
     if (!currentAnn?.title || !currentAnn?.content || !currentAnn?.type) {
@@ -109,7 +102,7 @@ export default function AdminAnnouncementsPage() {
     } else {
       // Create
       const newAnn: Announcement = {
-        ...currentAnn as any,
+        ...currentAnn as Announcement,
         id: `ann_${Date.now()}`,
         date: today,
         status: "active",
@@ -133,7 +126,7 @@ export default function AdminAnnouncementsPage() {
       } else {
         throw new Error()
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("儲存失敗，請檢查網路連線")
     }
   }
@@ -158,7 +151,7 @@ export default function AdminAnnouncementsPage() {
         setAnnouncements(updatedList)
         toast.info("狀態已變更")
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("操作失敗")
     }
   }

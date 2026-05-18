@@ -6,9 +6,7 @@ import {
   UserX, 
   Search, 
   Edit2, 
-  Trash2,
   Lock,
-  Mail,
   Key,
   ShieldCheck,
   Zap,
@@ -28,7 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, API_BASE_URL } from "@/lib/utils";
 
 interface UserItem {
   id: string;
@@ -64,7 +62,6 @@ const ROLES = [
   },
 ];
 
-const API_BASE_URL = "http://localhost:3001";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
@@ -73,22 +70,22 @@ export default function AdminUsersPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [currentUser, setCurrentUser] = useState<Partial<UserItem> | null>(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/users`);
       const data = await res.json();
       setUsers(data);
-    } catch (err) {
+    } catch {
       toast.error("無法載入使用者資料");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleSave = async () => {
     if (!currentUser?.username || !currentUser?.displayName || !currentUser?.role) {
@@ -106,7 +103,7 @@ export default function AdminUsersPage() {
       );
     } else {
       const newUser: UserItem = {
-        ...currentUser as any,
+        ...currentUser as UserItem,
         id: `u_${Date.now()}`,
         status: "active",
         lastLogin: "Never",
@@ -128,7 +125,7 @@ export default function AdminUsersPage() {
         setCurrentUser(null);
         toast.success(currentUser.id ? "使用者資訊已更新" : "新帳號已建立");
       }
-    } catch (err) {
+    } catch {
       toast.error("儲存失敗");
     }
   };
@@ -137,7 +134,7 @@ export default function AdminUsersPage() {
     const admin = localStorage.getItem("admin_user") || "Admin";
     const updated = users.map(u => {
       if (u.id === id) {
-        return { ...u, status: u.status === "active" ? "disabled" : "active" as any };
+        return { ...u, status: (u.status === "active" ? "disabled" : "active") as "active" | "disabled" };
       }
       return u;
     });
@@ -152,7 +149,7 @@ export default function AdminUsersPage() {
         setUsers(updated);
         toast.info("使用者狀態已變更");
       }
-    } catch (err) {
+    } catch {
       toast.error("操作失敗");
     }
   };
@@ -285,7 +282,7 @@ export default function AdminUsersPage() {
                 {ROLES.map(role => (
                   <button
                     key={role.value}
-                    onClick={() => setCurrentUser({...currentUser!, role: role.value as any})}
+                    onClick={() => setCurrentUser({...currentUser!, role: role.value as UserItem['role']})}
                     className={cn(
                       "p-4 rounded-2xl border-2 transition-all flex items-center gap-4 text-left group",
                       currentUser?.role === role.value 

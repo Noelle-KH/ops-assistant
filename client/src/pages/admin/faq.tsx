@@ -6,9 +6,6 @@ import {
   Eye, 
   EyeOff, 
   Save, 
-  X, 
-  MoreHorizontal,
-  Trash2,
   AlertCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -26,25 +23,24 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { AssociationSelector } from "@/components/association-selector";
+import { cn, API_BASE_URL } from "@/lib/utils";
 
 interface FAQItem {
   id: string;
-  category: string;
-  tags: string[];
   question: string;
   answer: string;
+  category: string;
+  tags: string[];
+  status: "active" | "disabled";
+  updated_at: string;
   ops_note?: string;
   answer_en?: string;
   linked_sop?: string;
   linked_template?: string;
-  updated_at: string;
-  status: "active" | "disabled";
 }
 
 const CATEGORIES = ["開戶", "交易帳戶", "入金", "出金", "交易", "代理", "活動", "其他"];
-const API_BASE_URL = "http://localhost:3001";
 
 export default function AdminFaqPage() {
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
@@ -54,22 +50,22 @@ export default function AdminFaqPage() {
   const [currentFaq, setCurrentFaq] = useState<Partial<FAQItem> | null>(null);
   const [tagInput, setTagInput] = useState("");
 
-  useEffect(() => {
-    fetchFaqs();
-  }, []);
-
   const fetchFaqs = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/faq`);
       const data = await res.json();
       setFaqs(data);
-    } catch (err) {
+    } catch (_err) {
       toast.error("無法載入 FAQ 資料");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void fetchFaqs();
+  }, []);
 
   const handleSave = async () => {
     if (!currentFaq?.question || !currentFaq?.answer || !currentFaq?.category) {

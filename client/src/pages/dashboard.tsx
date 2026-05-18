@@ -10,19 +10,18 @@ import {
   Calendar,
   ShieldAlert
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Link } from "react-router-dom"
 import { ChainParser } from "@/components/chain-parser"
 import { useEffect, useState } from "react"
+import { API_BASE_URL } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog"
 
 interface Announcement {
@@ -32,6 +31,7 @@ interface Announcement {
   type: 'feature' | 'update' | 'maintenance' | 'emergency';
   priority: 'high' | 'normal' | 'low' | 'urgent';
   date: string;
+  status?: 'active' | 'disabled';
 }
 
 const shortcuts = [
@@ -75,11 +75,11 @@ export default function Dashboard() {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null)
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/announcements')
+    fetch(`${API_BASE_URL}/api/announcements`)
       .then(res => res.json())
       .then(data => {
         // Only show active announcements
-        const activeData = data.filter((item: any) => item.status !== 'disabled')
+        const activeData = data.filter((item: Announcement) => item.status !== 'disabled')
         setAnnouncements(activeData)
         setLoading(false)
       })

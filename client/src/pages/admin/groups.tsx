@@ -5,11 +5,7 @@ import {
   Plus, 
   Edit2, 
   Trash2, 
-  Save, 
-  X, 
-  MoreHorizontal,
-  ChevronRight,
-  MessageSquare
+  Save
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -26,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, API_BASE_URL } from "@/lib/utils";
 
 interface GroupItem {
   id: string;
@@ -39,7 +35,6 @@ interface GroupItem {
 }
 
 const DIVISIONS = ["運營", "金流", "產品", "機器人", "其他"];
-const API_BASE_URL = "http://localhost:3001";
 
 export default function AdminGroupsPage() {
   const [groups, setGroups] = useState<GroupItem[]>([]);
@@ -50,22 +45,22 @@ export default function AdminGroupsPage() {
   const [useCaseInput, setUseCaseInput] = useState("");
   const [contactInput, setContactInput] = useState("");
 
-  useEffect(() => {
-    fetchGroups();
-  }, []);
-
   const fetchGroups = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/groups`);
       const data = await res.json();
       setGroups(data);
-    } catch (err) {
+    } catch (_err) {
       toast.error("無法載入群組資料");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void fetchGroups();
+  }, []);
 
   const handleSave = async () => {
     if (!currentGroup?.name || !currentGroup?.division) {

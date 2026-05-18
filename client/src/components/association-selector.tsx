@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, API_BASE_URL } from "@/lib/utils";
 
 interface Item {
   id: string;
@@ -28,19 +28,11 @@ interface AssociationSelectorProps {
   maxSelections?: number;
 }
 
-const API_BASE_URL = "http://localhost:3001";
-
 export function AssociationSelector({ type, selectedIds, onChange, label, maxSelections }: AssociationSelectorProps) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    if (open) {
-      fetchItems();
-    }
-  }, [open]);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -55,6 +47,12 @@ export function AssociationSelector({ type, selectedIds, onChange, label, maxSel
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (open) {
+      fetchItems();
+    }
+  }, [open]);
 
   const toggleItem = (id: string) => {
     if (selectedIds.includes(id)) {

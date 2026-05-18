@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { cn, API_BASE_URL } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface SearchResult {
@@ -21,9 +21,6 @@ interface SearchResult {
   path: string;
   snippet?: string;
 }
-
-// 根據環境判斷 API URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 export function GlobalSearch({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
   const [query, setQuery] = useState("");

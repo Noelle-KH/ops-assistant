@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Users, MessageSquare, ShieldCheck, Cpu, Landmark } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { API_BASE_URL } from "@/lib/utils";
 
 interface GroupItem {
   id: string;
@@ -15,9 +16,7 @@ interface GroupItem {
   notes: string;
 }
 
-const API_BASE_URL = "http://localhost:3001";
-
-const DIVISION_ICONS: Record<string, any> = {
+const DIVISION_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "運營": ShieldCheck,
   "金流": Landmark,
   "產品": Cpu,

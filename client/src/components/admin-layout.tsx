@@ -4,7 +4,6 @@ import {
   FileText, 
   BookOpen, 
   Mail, 
-  Users, 
   Settings, 
   LogOut, 
   ChevronRight,

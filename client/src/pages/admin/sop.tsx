@@ -6,12 +6,9 @@ import {
   Eye, 
   EyeOff, 
   Save, 
-  X, 
   ChevronRight,
   ChevronLeft,
   Trash2,
-  GripVertical,
-  AlertCircle,
   FileText,
   ListOrdered,
   Zap
@@ -30,9 +27,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, API_BASE_URL } from "@/lib/utils";
 import { AssociationSelector } from "@/components/association-selector";
 
 interface SOPItem {
@@ -56,7 +52,6 @@ interface SOPItem {
 }
 
 const CATEGORIES = ["帳戶管理", "開戶", "入金", "出金", "交易", "代理", "合規", "其他"];
-const API_BASE_URL = "http://localhost:3001";
 
 export default function AdminSopPage() {
   const [sops, setSops] = useState<SOPItem[]>([]);
@@ -66,22 +61,22 @@ export default function AdminSopPage() {
   const [currentSop, setCurrentSop] = useState<Partial<SOPItem> | null>(null);
   const [activeStep, setActiveStep] = useState<"basic" | "steps" | "exceptions">("basic");
 
-  useEffect(() => {
-    fetchSops();
-  }, []);
-
   const fetchSops = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/sop`);
       const data = await res.json();
       setSops(data);
-    } catch (err) {
+    } catch (_err) {
       toast.error("無法載入 SOP 資料");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void fetchSops();
+  }, []);
 
   const initNewSop = () => {
     setCurrentSop({
