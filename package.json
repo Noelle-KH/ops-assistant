@@ -1,0 +1,7 @@
+{
+  "name": "ops-assistant-root",
+  "private": true,
+  "engines": {
+    "node": "20.x"
+  }
+}
