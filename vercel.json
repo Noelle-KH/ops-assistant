@@ -3,7 +3,7 @@
   "outputDirectory": "client/dist",
   "functions": {
     "server/src/index.ts": {
-      "runtime": "@vercel/node@5"
+      "runtime": "nodejs20.x"
     }
   },
   "rewrites": [
