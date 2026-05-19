@@ -76,10 +76,19 @@ export default function AdminToolsPage() {
     const admin = localStorage.getItem("admin_user") || "Admin";
     let updatedTools = [...tools];
 
+    const cleanedTool = {
+      ...currentTool,
+      name: currentTool.name || "",
+      category: currentTool.category || "其他",
+      desc: currentTool.desc || "",
+      url: currentTool.url || "",
+      accounts: currentTool.accounts || []
+    };
+
     if (currentTool.id) {
-      updatedTools = updatedTools.map(t => t.id === currentTool.id ? currentTool as ToolItem : t);
+      updatedTools = updatedTools.map(t => t.id === currentTool.id ? cleanedTool as ToolItem : t);
     } else {
-      const newTool = { ...currentTool, id: `tool_${Date.now()}` } as ToolItem;
+      const newTool = { ...cleanedTool, id: `tool_${Date.now()}` } as ToolItem;
       updatedTools.unshift(newTool);
     }
 

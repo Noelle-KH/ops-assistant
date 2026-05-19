@@ -322,11 +322,16 @@ export default function AdminTemplatesPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">標籤 (以逗號分隔)</Label>
+                    <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">標籤 (以逗號或空白分隔)</Label>
                     <Input 
                       placeholder="如: 取款, 安撫, 進度"
                       value={currentTpl.tags?.join(", ")}
-                      onChange={e => setCurrentTpl({...currentTpl, tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean)})}
+                      onChange={e => {
+                        // Supports both commas and spaces as delimiters
+                        const val = e.target.value;
+                        const tags = val.split(/[,\s，]+/).map(t => t.trim()).filter(Boolean);
+                        setCurrentTpl({...currentTpl, tags});
+                      }}
                       className="rounded-xl"
                     />
                   </div>
