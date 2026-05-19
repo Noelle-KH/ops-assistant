@@ -36,6 +36,7 @@ interface UserItem {
   status: "active" | "disabled";
   lastLogin: string;
   createdAt: string;
+  password?: string;
 }
 
 const ROLES = [
@@ -98,16 +99,23 @@ export default function AdminUsersPage() {
     const now = new Date().toISOString();
 
     if (currentUser.id) {
-      updatedUsers = updatedUsers.map(u => 
-        u.id === currentUser.id ? { ...u, ...currentUser } as UserItem : u
-      );
+      updatedUsers = updatedUsers.map(u => {
+        if (u.id === currentUser.id) {
+          const { password, ...rest } = currentUser;
+          // Only include password if it has been typed (not empty)
+          const updateData = password ? { ...u, ...currentUser } : { ...u, ...rest };
+          return updateData as UserItem;
+        }
+        return u;
+      });
     } else {
       const newUser: UserItem = {
         ...currentUser as UserItem,
         id: `u_${Date.now()}`,
         status: "active",
         lastLogin: "Never",
-        createdAt: now.split('T')[0]
+        createdAt: now.split('T')[0],
+        password: currentUser.password || "Admin123456"
       };
       updatedUsers.unshift(newUser);
     }
@@ -276,6 +284,22 @@ export default function AdminUsersPage() {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">
+                {currentUser?.id ? "重設密碼 (若不修改請留空)" : "初始密碼 (預設 Admin123456)"}
+              </Label>
+              <div className="relative">
+                <Input 
+                  type="password"
+                  placeholder={currentUser?.id ? "輸入新密碼..." : "Admin123456"}
+                  className="h-11 rounded-xl font-bold pl-10"
+                  value={currentUser?.password || ""}
+                  onChange={e => setCurrentUser({...currentUser!, password: e.target.value})}
+                />
+                <Lock className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+              </div>
+            </div>
+
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">選取角色與權限</Label>
               <div className="grid grid-cols-1 gap-2">
@@ -316,18 +340,6 @@ export default function AdminUsersPage() {
                 ))}
               </div>
             </div>
-
-            {!currentUser?.id && (
-              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex gap-3 shadow-sm shadow-amber-100/50">
-                <Lock className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">安全提醒</p>
-                  <p className="text-[10px] font-bold text-amber-700/80 leading-relaxed">
-                    初始密碼預設為 <span className="text-amber-900 underline decoration-2">Admin123456</span>。
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
 
           <DialogFooter className="p-2 gap-3">

@@ -25,6 +25,12 @@ router.post('/login', async (req, res) => {
 
     const { password: _, ...userWithoutPassword } = user;
     
+    // Update last login timestamp
+    const now = new Date().toISOString();
+    await db.update(users)
+      .set({ lastLogin: now })
+      .where(eq(users.id, user.id));
+
     // Sign JWT
     const token = jwt.sign(
       { 

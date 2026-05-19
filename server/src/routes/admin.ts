@@ -126,7 +126,15 @@ router.post('/update/:type', async (req, res) => {
 // Get Users
 router.get('/users', async (req, res) => {
   try {
-    const data = await db.select().from(users);
+    const data = await db.select({
+      id: users.id,
+      username: users.username,
+      displayName: users.displayName,
+      role: users.role,
+      status: users.status,
+      lastLogin: users.lastLogin,
+      createdAt: users.createdAt
+    }).from(users);
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to read users' });

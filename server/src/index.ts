@@ -23,7 +23,8 @@ app.get('/api/health', (req, res) => {
 
 export default app;
 
-if (process.env.NODE_ENV !== 'production') {
+// For local development
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   const port = process.env.PORT || 3001;
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
