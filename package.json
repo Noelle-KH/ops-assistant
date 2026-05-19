@@ -1,6 +1,10 @@
 {
   "name": "ops-assistant-root",
   "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "engines": {
     "node": "20.x"
   }
