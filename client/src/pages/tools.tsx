@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { API_BASE_URL } from "@/lib/utils";
+import { API_BASE_URL, fetchWithAuth } from "@/lib/utils";
 
 interface AccountItem {
   role: string;
@@ -36,20 +36,24 @@ export default function ToolsPage() {
   const canSeeSensitive = userRole === "admin" || userRole === "high_level";
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/tools`, {
-      headers: {
-        'x-user-role': userRole
-      }
-    })
-      .then(res => res.json())
-      .then(data => {
-        setTools(data);
-        setLoading(false);
-      })
-      .catch(err => {
+    const fetchTools = async () => {
+      try {
+        const res = await fetchWithAuth(`${API_BASE_URL}/api/tools`)
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          setTools(data);
+        } else {
+          console.error("Received non-array data from API:", data);
+          setTools([]);
+        }
+      } catch (err) {
         console.error("Failed to fetch tools:", err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    void fetchTools();
   }, [userRole]);
 
   const filteredTools = tools.filter(tool => 

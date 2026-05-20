@@ -84,6 +84,7 @@ export default function LoginPage() {
                 <User className="absolute left-3 top-3.5 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
                 <Input 
                   placeholder="Username" 
+                  autoComplete="username"
                   className="pl-10 h-12 bg-white/50 border-slate-200 focus:border-primary focus:ring-primary/20 transition-all rounded-xl"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -95,15 +96,15 @@ export default function LoginPage() {
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">存取密碼</label>
               <div className="relative group">
                 <Lock className="absolute left-3 top-3.5 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                <Input 
-                  type="password" 
-                  placeholder="••••••••" 
+                <Input
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="••••••••"
                   className="pl-10 h-12 bg-white/50 border-slate-200 focus:border-primary focus:ring-primary/20 transition-all rounded-xl"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                />
-              </div>
+                />              </div>
             </div>
             <Button 
               type="submit" 

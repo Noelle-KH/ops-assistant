@@ -48,8 +48,7 @@ export function AdminLayout() {
     localStorage.removeItem("user_token");
     localStorage.removeItem("user_name");
     localStorage.removeItem("user_role");
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_user");
+    localStorage.removeItem("last_activity");
     toast.info("已成功登出系統");
     navigate("/login");
   };
@@ -92,7 +91,7 @@ export function AdminLayout() {
         <div className="p-4 border-t border-slate-800/50 shrink-0 bg-slate-900/50">
           <div className="bg-slate-800/50 rounded-2xl p-4 mb-4">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">當前管理員</p>
-            <p className="text-sm font-bold text-slate-200 truncate">{adminUser || "Administrator"}</p>
+            <p className="text-sm font-bold text-slate-200 truncate">{localStorage.getItem("user_name") || "Administrator"}</p>
           </div>
           
           <div className="space-y-1">

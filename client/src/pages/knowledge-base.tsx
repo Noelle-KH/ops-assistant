@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { API_BASE_URL } from "@/lib/utils";
+import { API_BASE_URL, fetchWithAuth } from "@/lib/utils";
 
   // --- Interfaces ---
 interface FAQItem {
@@ -79,34 +79,37 @@ export default function KnowledgeBasePage() {
     setLoading(true);
     try {
       const [faqRes, sopRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/faq`),
-        fetch(`${API_BASE_URL}/api/sop`)
+        fetchWithAuth(`${API_BASE_URL}/api/faq`),
+        fetchWithAuth(`${API_BASE_URL}/api/sop`)
       ]);
       const faqData = await faqRes.json();
       const sopData = await sopRes.json();
       
-      setFaqs(faqData);
-      const activeSops = sopData.filter((s: SOPItem) => s.status !== "disabled");
-      setSops(activeSops);
+      if (Array.isArray(faqData)) setFaqs(faqData);
+      
+      if (Array.isArray(sopData)) {
+        const activeSops = sopData.filter((s: SOPItem) => s.status !== "disabled");
+        setSops(activeSops);
 
-      // 1. Handle direct SOP path linking (from routes)
-      if (params.id) {
-        const foundSop = activeSops.find((s: SOPItem) => s.id === params.id);
-        if (foundSop) {
-          setActiveSop(foundSop);
-          setIsDialogOpen(true);
+        // 1. Handle direct SOP path linking (from routes)
+        if (params.id) {
+          const foundSop = activeSops.find((s: SOPItem) => s.id === params.id);
+          if (foundSop) {
+            setActiveSop(foundSop);
+            setIsDialogOpen(true);
+          }
         }
-      }
 
-      // 2. Handle Search Params linking (from templates/other)
-      if (targetId && targetType === "sop") {
-        const foundSop = activeSops.find((s: SOPItem) => s.id === targetId);
-        if (foundSop) {
-          setActiveSop(foundSop);
-          setIsDialogOpen(true);
+        // 2. Handle Search Params linking (from templates/other)
+        if (targetId && targetType === "sop") {
+          const foundSop = activeSops.find((s: SOPItem) => s.id === targetId);
+          if (foundSop) {
+            setActiveSop(foundSop);
+            setIsDialogOpen(true);
+          }
+        } else if (targetId && targetType === "faq") {
+          setExpandedFaq(targetId);
         }
-      } else if (targetId && targetType === "faq") {
-        setExpandedFaq(targetId);
       }
 
     } catch (err) {

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Link, useSearchParams } from "react-router-dom";
-import { cn, API_BASE_URL } from "@/lib/utils";
+import { cn, API_BASE_URL, fetchWithAuth } from "@/lib/utils";
 
 interface TemplateField {
   key: string;
@@ -60,25 +60,31 @@ export default function TemplatesPage() {
   const [pendingCopy, setPendingCopy] = useState<{ id: string, content: string } | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/templates`)
-      .then(res => res.json())
-      .then(data => {
-        setTemplates(data);
-        setLoading(false);
-        
-        // Handle direct linking via ID
-        const targetId = searchParams.get("id");
-        if (targetId) {
-          const target = data.find((t: EmailTemplate) => t.id === targetId);
-          if (target && target.variants.length > 0) {
-            setExpandedTpl(target.variants[0].variant_id);
+    const fetchTemplates = async () => {
+      try {
+        const res = await fetchWithAuth(`${API_BASE_URL}/api/templates`)
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          setTemplates(data);
+          // Handle direct linking via ID
+          const targetId = searchParams.get("id");
+          if (targetId) {
+            const target = data.find((t: EmailTemplate) => t.id === targetId);
+            if (target && target.variants.length > 0) {
+              setExpandedTpl(target.variants[0].variant_id);
+            }
           }
+        } else {
+          setTemplates([]);
         }
-      })
-      .catch(err => {
+      } catch (err) {
         console.error("Failed to fetch templates:", err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    void fetchTemplates();
   }, [searchParams]);
 
   const filteredTemplates = templates.filter(tpl => {

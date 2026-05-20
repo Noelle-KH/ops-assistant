@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { API_BASE_URL } from "@/lib/utils";
+import { API_BASE_URL, fetchWithAuth } from "@/lib/utils";
 
 interface GroupItem {
   id: string;
@@ -29,17 +29,25 @@ export default function GroupsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/groups`)
-      .then(res => res.json())
-      .then(data => {
-        setGroups(data);
-        setLoading(false);
-      })
-      .catch(err => {
+    const fetchGroups = async () => {
+      try {
+        const res = await fetchWithAuth(`${API_BASE_URL}/api/groups`)
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          setGroups(data);
+        } else {
+          setGroups([]);
+        }
+      } catch (err) {
         console.error("Failed to fetch groups:", err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    void fetchGroups();
   }, []);
+
 
   const filteredGroups = groups.filter(grp => 
     grp.name.toLowerCase().includes(search.toLowerCase()) ||

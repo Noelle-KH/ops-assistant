@@ -17,11 +17,12 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Link } from "react-router-dom"
 import { ChainParser } from "@/components/chain-parser"
 import { useEffect, useState } from "react"
-import { API_BASE_URL } from "@/lib/utils"
+import { API_BASE_URL, fetchWithAuth } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 
 interface Announcement {
@@ -75,18 +76,25 @@ export default function Dashboard() {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null)
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/announcements`)
-      .then(res => res.json())
-      .then(data => {
-        // Only show active announcements
-        const activeData = data.filter((item: Announcement) => item.status !== 'disabled')
-        setAnnouncements(activeData)
-        setLoading(false)
-      })
-      .catch(err => {
+    const fetchAnnouncements = async () => {
+      try {
+        const res = await fetchWithAuth(`${API_BASE_URL}/api/announcements`)
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          // Only show active announcements
+          const activeData = data.filter((item: Announcement) => item.status !== 'disabled')
+          setAnnouncements(activeData)
+        } else {
+          setAnnouncements([])
+        }
+      } catch (err) {
         console.error('Failed to fetch announcements:', err)
+      } finally {
         setLoading(false)
-      })
+      }
+    }
+
+    void fetchAnnouncements()
   }, [])
 
   const getAnnouncementIcon = (type: string) => {
@@ -252,9 +260,9 @@ export default function Dashboard() {
                 </div>
                 
                 <div className="prose prose-slate max-w-none">
-                  <p className="text-slate-600 leading-loose whitespace-pre-wrap font-medium">
+                  <DialogDescription className="text-slate-600 leading-loose whitespace-pre-wrap font-medium text-base">
                     {selectedAnnouncement.content}
-                  </p>
+                  </DialogDescription>
                 </div>
                 
                 <div className="pt-6 border-t border-slate-100">
