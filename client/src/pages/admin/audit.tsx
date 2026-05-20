@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { cn, API_BASE_URL } from "@/lib/utils";
+import { cn, API_BASE_URL, fetchWithAuth } from "@/lib/utils";
 
 interface AuditLog {
   timestamp: string;
@@ -41,9 +41,14 @@ export default function AdminAuditPage() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/audit`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/audit`);
       const data = await res.json();
-      setLogs(data);
+      if (Array.isArray(data)) {
+        setLogs(data);
+      } else {
+        setLogs([]);
+        console.error("Audit data is not an array:", data);
+      }
     } catch (_err) {
       toast.error("無法載入稽核日誌");
     } finally {
@@ -55,7 +60,7 @@ export default function AdminAuditPage() {
     void fetchLogs();
   }, []);
 
-  const filteredLogs = logs.filter(log => 
+  const filteredLogs = (Array.isArray(logs) ? logs : []).filter(log => 
     log.admin.toLowerCase().includes(search.toLowerCase()) ||
     log.target.toLowerCase().includes(search.toLowerCase()) ||
     log.action.toLowerCase().includes(search.toLowerCase())

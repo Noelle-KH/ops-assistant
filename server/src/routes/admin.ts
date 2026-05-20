@@ -12,8 +12,13 @@ import {
   auditLogs 
 } from '../db/schema';
 import { sql } from 'drizzle-orm';
+import { authenticateToken, requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
+
+// Apply admin protection to all routes in this file
+router.use(authenticateToken);
+router.use(requireAdmin);
 
 // Helper to log audit events to DB
 const logAudit = async (admin: string, action: string, target: string, details: any) => {

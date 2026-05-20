@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { cn, API_BASE_URL } from "@/lib/utils";
+import { cn, API_BASE_URL, fetchWithAuth } from "@/lib/utils";
 
 interface AccountInfo {
   role: string;
@@ -47,15 +47,23 @@ export default function AdminToolsPage() {
   const [tools, setTools] = useState<ToolItem[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentTool, setCurrentTool] = useState<Partial<ToolItem> | null>(null);
 
   const fetchTools = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/tools`);
+      const token = localStorage.getItem("user_token");
+      const res = await fetch(`${API_BASE_URL}/api/tools`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await res.json();
-      setTools(data);
+      if (Array.isArray(data)) {
+        setTools(data);
+      } else {
+        setTools([]);
+      }
     } catch {
       toast.error("無法載入工具資料");
     } finally {
@@ -73,7 +81,9 @@ export default function AdminToolsPage() {
       return;
     }
 
-    const admin = localStorage.getItem("admin_user") || "Admin";
+    setIsSaving(true);
+    const admin = localStorage.getItem("user_name") || "Admin";
+    const token = localStorage.getItem("user_token");
     let updatedTools = [...tools];
 
     const cleanedTool = {
@@ -95,7 +105,10 @@ export default function AdminToolsPage() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/update/tools`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ data: updatedTools, admin })
       });
 
@@ -105,21 +118,27 @@ export default function AdminToolsPage() {
         setCurrentTool(null);
         toast.success("工具資料已更新");
       }
-    } catch {
+    } catch (err) {
       toast.error("儲存失敗");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const deleteTool = async (id: string) => {
     if (!confirm("確定要刪除此工具嗎？")) return;
     
-    const admin = localStorage.getItem("admin_user") || "Admin";
+    const admin = localStorage.getItem("user_name") || "Admin";
+    const token = localStorage.getItem("user_token");
     const updated = tools.filter(t => t.id !== id);
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/update/tools`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ data: updated, admin })
       });
       if (res.ok) {
@@ -363,10 +382,11 @@ export default function AdminToolsPage() {
             <Button variant="ghost" onClick={() => setIsEditing(false)} className="rounded-xl font-bold text-slate-400">
               取消
             </Button>
-            <Button onClick={handleSave} className="rounded-xl font-bold px-10 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
-              <Save className="mr-2 h-4 w-4" /> 儲存工具設定
+            <Button onClick={handleSave} disabled={isSaving} className="rounded-xl font-bold px-10 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
+              <Save className="mr-2 h-4 w-4" /> {isSaving ? "處理中..." : "儲存工具設定"}
             </Button>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
     </div>

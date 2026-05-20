@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { cn, API_BASE_URL } from "@/lib/utils";
+import { cn, API_BASE_URL, fetchWithAuth } from "@/lib/utils";
 
 interface Stats {
   faqs: number;
@@ -49,30 +49,35 @@ export default function AdminDashboardPage() {
     setLoading(true);
     try {
       const [faqRes, sopRes, tplRes, annRes, auditRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/faq`),
-        fetch(`${API_BASE_URL}/api/sop`),
-        fetch(`${API_BASE_URL}/api/templates`),
-        fetch(`${API_BASE_URL}/api/announcements`),
-        fetch(`${API_BASE_URL}/api/admin/audit`)
+        fetchWithAuth(`${API_BASE_URL}/api/faq`),
+        fetchWithAuth(`${API_BASE_URL}/api/sop`),
+        fetchWithAuth(`${API_BASE_URL}/api/templates`),
+        fetchWithAuth(`${API_BASE_URL}/api/announcements`),
+        fetchWithAuth(`${API_BASE_URL}/api/admin/audit`)
       ]);
 
       const faqs = await faqRes.json();
       const sops = await sopRes.json();
       const templates = await tplRes.json();
       const announcements = await annRes.json();
-      const logs = await auditRes.json();
+      const logsData = await auditRes.json();
 
       setStats({
-        faqs: faqs.length,
-        sops: sops.length,
-        templates: templates.length,
-        announcements: announcements.length,
-        activeFaqs: faqs.filter((f: any) => f.status === "active").length,
-        activeSops: sops.filter((s: any) => s.status === "active").length,
-        activeTemplates: templates.filter((t: any) => t.status === "active").length,
-        activeAnnouncements: announcements.filter((a: any) => a.status === "active").length,
+        faqs: Array.isArray(faqs) ? faqs.length : 0,
+        sops: Array.isArray(sops) ? sops.length : 0,
+        templates: Array.isArray(templates) ? templates.length : 0,
+        announcements: Array.isArray(announcements) ? announcements.length : 0,
+        activeFaqs: Array.isArray(faqs) ? faqs.filter((f: any) => f.status === "active").length : 0,
+        activeSops: Array.isArray(sops) ? sops.filter((s: any) => s.status === "active").length : 0,
+        activeTemplates: Array.isArray(templates) ? templates.filter((t: any) => t.status === "active").length : 0,
+        activeAnnouncements: Array.isArray(announcements) ? announcements.filter((a: any) => a.status === "active").length : 0,
       });
-      setLogs(logs.slice(0, 10)); // Top 10 latest logs
+      
+      if (Array.isArray(logsData)) {
+        setLogs(logsData.slice(0, 10)); // Top 10 latest logs
+      } else {
+        setLogs([]);
+      }
     } catch (err) {
       toast.error("無法載入儀表板數據");
     } finally {

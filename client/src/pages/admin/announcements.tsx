@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import {
@@ -29,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "sonner"
-import { cn, API_BASE_URL } from "@/lib/utils"
+import { cn, API_BASE_URL, fetchWithAuth } from "@/lib/utils"
 
 interface Announcement {
   id: string
@@ -59,14 +60,21 @@ export default function AdminAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [currentAnn, setCurrentAnn] = useState<Partial<Announcement> | null>(null)
 
   const fetchAnnouncements = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE_URL}/api/announcements`)
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/announcements`)
       const data = await res.json()
+      
+      if (!Array.isArray(data)) {
+        setAnnouncements([])
+        return
+      }
+
       // Ensure status field exists for older data
       const normalizedData = data.map((item: Announcement) => ({
         ...item,
@@ -112,9 +120,8 @@ export default function AdminAnnouncementsPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/announcements`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/announcements`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updatedList, admin })
       })
 
@@ -141,9 +148,8 @@ export default function AdminAnnouncementsPage() {
     })
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/announcements`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/announcements`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updatedList, admin })
       })
 
@@ -280,6 +286,9 @@ export default function AdminAnnouncementsPage() {
             <DialogTitle className="text-xl font-black">
               {currentAnn?.id ? "編輯公告" : "發布新公告"}
             </DialogTitle>
+            <DialogDescription>
+              在此填寫公告的詳細資訊，完成後點擊儲存。
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-5 py-4">
@@ -350,9 +359,9 @@ export default function AdminAnnouncementsPage() {
             <Button variant="outline" onClick={() => setIsEditing(false)} className="rounded-xl font-bold">
               取消
             </Button>
-            <Button onClick={handleSave} className="rounded-xl font-bold px-8">
+            <Button onClick={handleSave} disabled={isSaving} className="rounded-xl font-bold px-8">
               <Save className="mr-2 h-4 w-4" /> 
-              {currentAnn?.id ? "儲存變更" : "立即發布"}
+              {isSaving ? "處理中..." : (currentAnn?.id ? "儲存變更" : "立即發布")}
             </Button>
           </DialogFooter>
         </DialogContent>

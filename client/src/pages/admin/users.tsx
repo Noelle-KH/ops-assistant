@@ -26,13 +26,13 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { cn, API_BASE_URL } from "@/lib/utils";
+import { cn, API_BASE_URL, fetchWithAuth } from "@/lib/utils";
 
 interface UserItem {
   id: string;
   username: string;
   displayName: string;
-  role: "admin" | "high_level" | "operator";
+  role: "admin" | "high-level" | "operator";
   status: "active" | "disabled";
   lastLogin: string;
   createdAt: string;
@@ -48,7 +48,7 @@ const ROLES = [
     icon: ShieldAlert 
   },
   { 
-    value: "high_level", 
+    value: "high-level", 
     label: "高級運營", 
     description: "敏感資訊存取", 
     color: "bg-amber-500", 
@@ -68,15 +68,20 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentUser, setCurrentUser] = useState<Partial<UserItem> | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/users`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/users`);
       const data = await res.json();
-      setUsers(data);
+      if (Array.isArray(data)) {
+        setUsers(data);
+      } else {
+        setUsers([]);
+      }
     } catch {
       toast.error("無法載入使用者資料");
     } finally {
@@ -94,7 +99,10 @@ export default function AdminUsersPage() {
       return;
     }
 
-    const admin = localStorage.getItem("admin_user") || "Admin";
+    setIsSaving(true);
+    // ...
+
+    const admin = localStorage.getItem("user_name") || "Admin";
     let updatedUsers = [...users];
     const now = new Date().toISOString();
 
@@ -121,9 +129,8 @@ export default function AdminUsersPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/users`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/users`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updatedUsers, admin })
       });
 
@@ -139,7 +146,7 @@ export default function AdminUsersPage() {
   };
 
   const toggleStatus = async (id: string) => {
-    const admin = localStorage.getItem("admin_user") || "Admin";
+    const admin = localStorage.getItem("user_name") || "Admin";
     const updated = users.map(u => {
       if (u.id === id) {
         return { ...u, status: (u.status === "active" ? "disabled" : "active") as "active" | "disabled" };
@@ -148,9 +155,8 @@ export default function AdminUsersPage() {
     });
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/users`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/users`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updated, admin })
       });
       if (res.ok) {
@@ -289,16 +295,16 @@ export default function AdminUsersPage() {
                 {currentUser?.id ? "重設密碼 (若不修改請留空)" : "初始密碼 (預設 Admin123456)"}
               </Label>
               <div className="relative">
-                <Input 
+                <Input
                   type="password"
+                  autoComplete="new-password"
                   placeholder={currentUser?.id ? "輸入新密碼..." : "Admin123456"}
                   className="h-11 rounded-xl font-bold pl-10"
                   value={currentUser?.password || ""}
                   onChange={e => setCurrentUser({...currentUser!, password: e.target.value})}
                 />
                 <Lock className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
-              </div>
-            </div>
+              </div>            </div>
 
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">選取角色與權限</Label>
@@ -346,8 +352,8 @@ export default function AdminUsersPage() {
             <Button variant="ghost" onClick={() => setIsEditing(false)} className="rounded-xl font-bold text-slate-400">
               取消
             </Button>
-            <Button onClick={handleSave} className="rounded-xl font-bold h-11 px-8 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
-              儲存帳號設定
+            <Button onClick={handleSave} disabled={isSaving} className="rounded-xl font-bold h-11 px-8 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
+              {isSaving ? "處理中..." : "儲存帳號設定"}
             </Button>
           </DialogFooter>
         </DialogContent>

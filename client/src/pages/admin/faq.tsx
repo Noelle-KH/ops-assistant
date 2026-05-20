@@ -24,7 +24,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AssociationSelector } from "@/components/association-selector";
-import { cn, API_BASE_URL } from "@/lib/utils";
+import { cn, API_BASE_URL, fetchWithAuth } from "@/lib/utils";
 
 interface FAQItem {
   id: string;
@@ -46,6 +46,7 @@ export default function AdminFaqPage() {
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentFaq, setCurrentFaq] = useState<Partial<FAQItem> | null>(null);
   const [tagInput, setTagInput] = useState("");
@@ -53,9 +54,13 @@ export default function AdminFaqPage() {
   const fetchFaqs = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/faq`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/faq`);
       const data = await res.json();
-      setFaqs(data);
+      if (Array.isArray(data)) {
+        setFaqs(data);
+      } else {
+        setFaqs([]);
+      }
     } catch (_err) {
       toast.error("無法載入 FAQ 資料");
     } finally {
@@ -73,13 +78,14 @@ export default function AdminFaqPage() {
       return;
     }
 
+    setIsSaving(true);
     // Process tags: support both English (,) and Chinese (，) commas
     const processedTags = tagInput
       .split(/[，,]/)
       .map(t => t.trim())
       .filter(Boolean);
 
-    const admin = localStorage.getItem("admin_user") || "Admin";
+    const admin = localStorage.getItem("user_name") || "Admin";
     let updatedFaqs = [...faqs];
     const now = new Date().toISOString().split('T')[0];
 
@@ -101,9 +107,8 @@ export default function AdminFaqPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/faq`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/faq`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updatedFaqs, admin })
       });
 
@@ -118,11 +123,13 @@ export default function AdminFaqPage() {
       }
     } catch (err) {
       toast.error("儲存失敗，請檢查後端連線");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const toggleStatus = async (id: string) => {
-    const admin = localStorage.getItem("admin_user") || "Admin";
+    const admin = localStorage.getItem("user_name") || "Admin";
     const updatedFaqs = faqs.map(f => {
       if (f.id === id) {
         return { ...f, status: f.status === "active" ? "disabled" : "active" as "active" | "disabled" };
@@ -131,9 +138,8 @@ export default function AdminFaqPage() {
     });
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/faq`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/faq`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updatedFaqs, admin })
       });
 
@@ -350,8 +356,8 @@ export default function AdminFaqPage() {
             <Button variant="outline" onClick={() => setIsEditing(false)} className="rounded-xl font-bold">
               取消
             </Button>
-            <Button onClick={handleSave} className="rounded-xl font-bold px-8">
-              <Save className="mr-2 h-4 w-4" /> 儲存變更
+            <Button onClick={handleSave} disabled={isSaving} className="rounded-xl font-bold px-8">
+              <Save className="mr-2 h-4 w-4" /> {isSaving ? "處理中..." : "儲存變更"}
             </Button>
           </DialogFooter>
         </DialogContent>

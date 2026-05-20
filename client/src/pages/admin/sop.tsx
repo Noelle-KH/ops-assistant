@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { cn, API_BASE_URL } from "@/lib/utils";
+import { cn, API_BASE_URL, fetchWithAuth } from "@/lib/utils";
 import { AssociationSelector } from "@/components/association-selector";
 
 interface SOPItem {
@@ -52,11 +52,11 @@ interface SOPItem {
 }
 
 const CATEGORIES = ["帳戶管理", "開戶", "入金", "出金", "交易", "代理", "合規", "其他"];
-
 export default function AdminSopPage() {
   const [sops, setSops] = useState<SOPItem[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentSop, setCurrentSop] = useState<Partial<SOPItem> | null>(null);
   const [activeStep, setActiveStep] = useState<"basic" | "steps" | "exceptions">("basic");
@@ -64,9 +64,13 @@ export default function AdminSopPage() {
   const fetchSops = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/sop`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/sop`);
       const data = await res.json();
-      setSops(data);
+      if (Array.isArray(data)) {
+        setSops(data);
+      } else {
+        setSops([]);
+      }
     } catch (_err) {
       toast.error("無法載入 SOP 資料");
     } finally {
@@ -100,7 +104,8 @@ export default function AdminSopPage() {
       return;
     }
 
-    const admin = localStorage.getItem("admin_user") || "Admin";
+    setIsSaving(true);
+    const admin = localStorage.getItem("user_name") || "Admin";
     let updatedSops = [...sops];
     const now = new Date().toISOString().split('T')[0];
 
@@ -129,9 +134,8 @@ export default function AdminSopPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/sop`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/sop`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updatedSops, admin })
       });
 
@@ -143,11 +147,13 @@ export default function AdminSopPage() {
       }
     } catch (err) {
       toast.error("儲存失敗");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const toggleStatus = async (id: string) => {
-    const admin = localStorage.getItem("admin_user") || "Admin";
+    const admin = localStorage.getItem("user_name") || "Admin";
     const updatedSops = sops.map(s => {
       if (s.id === id) {
         return { ...s, status: s.status === "active" ? "disabled" : "active" as any };
@@ -156,9 +162,8 @@ export default function AdminSopPage() {
     });
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/sop`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/sop`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updatedSops, admin })
       });
       if (res.ok) {
@@ -531,8 +536,8 @@ export default function AdminSopPage() {
               <Button variant="ghost" onClick={() => setIsEditing(false)} className="rounded-xl font-bold text-slate-400">
                 取消
               </Button>
-              <Button onClick={handleSave} className="rounded-xl font-bold px-10 shadow-lg shadow-primary/20">
-                <Save className="mr-2 h-4 w-4" /> 儲存 SOP 流程
+              <Button onClick={handleSave} disabled={isSaving} className="rounded-xl font-bold px-10 shadow-lg shadow-primary/20">
+                <Save className="mr-2 h-4 w-4" /> {isSaving ? "處理中..." : "儲存 SOP 流程"}
               </Button>
             </div>
           </DialogFooter>

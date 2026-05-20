@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { cn, API_BASE_URL } from "@/lib/utils";
+import { cn, API_BASE_URL, fetchWithAuth } from "@/lib/utils";
 import { AssociationSelector } from "@/components/association-selector";
 
 interface TemplateField {
@@ -59,11 +59,11 @@ interface EmailTemplate {
 }
 
 const CATEGORIES = ["取款類", "帳戶變更類", "開戶類", "審查類", "其他"];
-
 export default function AdminTemplatesPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentTpl, setCurrentTpl] = useState<Partial<EmailTemplate> | null>(null);
   const [activeStep, setActiveStep] = useState<"basic" | "variants">("basic");
@@ -71,9 +71,13 @@ export default function AdminTemplatesPage() {
   const fetchTemplates = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/templates`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/templates`);
       const data = await res.json();
-      setTemplates(data);
+      if (Array.isArray(data)) {
+        setTemplates(data);
+      } else {
+        setTemplates([]);
+      }
     } catch {
       toast.error("無法載入模板資料");
     } finally {
@@ -109,7 +113,8 @@ export default function AdminTemplatesPage() {
       return;
     }
 
-    const admin = localStorage.getItem("admin_user") || "Admin";
+    setIsSaving(true);
+    const admin = localStorage.getItem("user_name") || "Admin";
     let updatedTemplates = [...templates];
     const now = new Date().toISOString().split('T')[0];
 
@@ -126,9 +131,8 @@ export default function AdminTemplatesPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/templates`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/templates`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updatedTemplates, admin })
       });
 
@@ -140,11 +144,13 @@ export default function AdminTemplatesPage() {
       }
     } catch {
       toast.error("儲存失敗");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const toggleStatus = async (id: string) => {
-    const admin = localStorage.getItem("admin_user") || "Admin";
+    const admin = localStorage.getItem("user_name") || "Admin";
     const updated = templates.map(t => {
       if (t.id === id) {
         return { ...t, status: (t.status === "active" ? "disabled" : "active") as "active" | "disabled" };
@@ -153,9 +159,8 @@ export default function AdminTemplatesPage() {
     });
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/templates`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/templates`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updated, admin })
       });
       if (res.ok) {
@@ -497,8 +502,8 @@ export default function AdminTemplatesPage() {
               <Button variant="ghost" onClick={() => setIsEditing(false)} className="rounded-xl font-bold text-slate-400">
                 取消
               </Button>
-              <Button onClick={handleSave} className="rounded-xl font-bold px-10 shadow-lg shadow-primary/20">
-                <Save className="mr-2 h-4 w-4" /> 儲存模板
+              <Button onClick={handleSave} disabled={isSaving} className="rounded-xl font-bold px-10 shadow-lg shadow-primary/20">
+                <Save className="mr-2 h-4 w-4" /> {isSaving ? "處理中..." : "儲存模板"}
               </Button>
             </div>
           </DialogFooter>

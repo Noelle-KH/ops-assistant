@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { cn, API_BASE_URL } from "@/lib/utils";
+import { cn, API_BASE_URL, fetchWithAuth } from "@/lib/utils";
 
 interface GroupItem {
   id: string;
@@ -40,6 +40,7 @@ export default function AdminGroupsPage() {
   const [groups, setGroups] = useState<GroupItem[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentGroup, setCurrentGroup] = useState<Partial<GroupItem> | null>(null);
   const [useCaseInput, setUseCaseInput] = useState("");
@@ -48,9 +49,13 @@ export default function AdminGroupsPage() {
   const fetchGroups = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/groups`);
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/groups`);
       const data = await res.json();
-      setGroups(data);
+      if (Array.isArray(data)) {
+        setGroups(data);
+      } else {
+        setGroups([]);
+      }
     } catch (_err) {
       toast.error("無法載入群組資料");
     } finally {
@@ -68,7 +73,8 @@ export default function AdminGroupsPage() {
       return;
     }
 
-    const admin = localStorage.getItem("admin_user") || "Admin";
+    setIsSaving(true);
+    const admin = localStorage.getItem("user_name") || "Admin";
     let updatedGroups = [...groups];
 
     const processedGroup = {
@@ -85,9 +91,8 @@ export default function AdminGroupsPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/groups`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/groups`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updatedGroups, admin })
       });
 
@@ -99,19 +104,20 @@ export default function AdminGroupsPage() {
       }
     } catch (err) {
       toast.error("儲存失敗");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const deleteGroup = async (id: string) => {
     if (!confirm("確定要刪除此群組嗎？")) return;
     
-    const admin = localStorage.getItem("admin_user") || "Admin";
+    const admin = localStorage.getItem("user_name") || "Admin";
     const updated = groups.filter(g => g.id !== id);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/groups`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/groups`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updated, admin })
       });
       if (res.ok) {
@@ -279,8 +285,8 @@ export default function AdminGroupsPage() {
             <Button variant="ghost" onClick={() => setIsEditing(false)} className="rounded-xl font-bold text-slate-400">
               取消
             </Button>
-            <Button onClick={handleSave} className="rounded-xl font-bold px-10 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
-              <Save className="mr-2 h-4 w-4" /> 儲存群組設定
+            <Button onClick={handleSave} disabled={isSaving} className="rounded-xl font-bold px-10 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
+              <Save className="mr-2 h-4 w-4" /> {isSaving ? "處理中..." : "儲存群組設定"}
             </Button>
           </DialogFooter>
         </DialogContent>
