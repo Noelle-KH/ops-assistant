@@ -73,7 +73,7 @@ export default function KnowledgeBasePage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   // Accordion State
-  const [expandedFaq, setExpandedFaq] = useState<string | undefined>(undefined);
+  const [expandedFaq, setExpandedFaq] = useState<string>("");
 
   const fetchData = async () => {
     setLoading(true);

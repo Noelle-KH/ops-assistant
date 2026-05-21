@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -259,6 +260,9 @@ export default function AdminFaqPage() {
             <DialogTitle className="text-xl font-black">
               {currentFaq?.id ? "編輯 FAQ 項目" : "新增 FAQ 項目"}
             </DialogTitle>
+            <DialogDescription>
+              請填寫 FAQ 的詳細資訊，包含問題、分類及標準回答。
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6 py-4">

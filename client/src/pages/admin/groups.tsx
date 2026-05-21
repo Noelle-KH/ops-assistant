@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -205,11 +206,14 @@ export default function AdminGroupsPage() {
               </div>
               {currentGroup?.id ? "編輯群組資訊" : "建立新群組"}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              設定群組名稱、所屬部門、用途說明及相關聯繫人。
+            </DialogDescription>
           </DialogHeader>
 
           <ScrollArea className="max-h-[70vh]">
-            <div className="p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
+            <div className="p-4 md:p-8 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">群組名稱</Label>
                   <Input 
@@ -248,7 +252,7 @@ export default function AdminGroupsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">常見場景 (以逗號分隔)</Label>
                   <Input 
@@ -280,6 +284,7 @@ export default function AdminGroupsPage() {
               </div>
             </div>
           </ScrollArea>
+
 
           <DialogFooter className="p-6 border-t bg-slate-50/50 gap-3">
             <Button variant="ghost" onClick={() => setIsEditing(false)} className="rounded-xl font-bold text-slate-400">

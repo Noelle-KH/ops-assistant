@@ -116,7 +116,7 @@ export default function AdminAuditPage() {
 
       <Card className="border-none shadow-xl shadow-slate-200/50 overflow-hidden">
         <CardHeader className="bg-slate-900 text-white p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <CardTitle className="text-xl font-black flex items-center gap-2">
                 <Activity className="h-5 w-5 text-primary" />
@@ -124,13 +124,13 @@ export default function AdminAuditPage() {
               </CardTitle>
               <p className="text-slate-400 text-xs font-medium">記錄所有內容更新、狀態變更與權限調整動作</p>
             </div>
-            <Badge className="bg-primary/20 text-primary border-none font-bold">
+            <Badge className="bg-primary/20 text-primary border-none font-bold shrink-0">
               共 {filteredLogs.length} 筆紀錄
             </Badge>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="grid grid-cols-12 bg-slate-50 border-b border-slate-100 p-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+          <div className="hidden md:grid grid-cols-12 bg-slate-50 border-b border-slate-100 p-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
             <div className="col-span-3 flex items-center gap-2"><Clock className="h-3 w-3" /> 發生時間</div>
             <div className="col-span-2 flex items-center gap-2"><User className="h-3 w-3" /> 操作人員</div>
             <div className="col-span-2 flex items-center gap-2"><Filter className="h-3 w-3" /> 動作類型</div>
@@ -141,29 +141,29 @@ export default function AdminAuditPage() {
             <div className="divide-y divide-slate-50">
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="grid grid-cols-12 p-6 gap-4 animate-pulse">
-                    <div className="col-span-3 h-4 bg-slate-100 rounded" />
-                    <div className="col-span-2 h-4 bg-slate-50 rounded" />
-                    <div className="col-span-2 h-4 bg-slate-100 rounded" />
-                    <div className="col-span-3 h-4 bg-slate-50 rounded" />
-                  </div>
+                  <div key={i} className="p-6 animate-pulse bg-white/50 h-20" />
                 ))
               ) : filteredLogs.length > 0 ? (
                 filteredLogs.map((log, i) => (
-                  <div key={i} className="grid grid-cols-12 p-5 items-center hover:bg-slate-50/50 transition-colors group">
-                    <div className="col-span-3">
+                  <div key={i} className="flex flex-col md:grid md:grid-cols-12 p-4 md:p-5 items-start md:items-center hover:bg-slate-50/50 transition-colors group gap-4 md:gap-0">
+                    {/* Time - col-span-3 */}
+                    <div className="md:col-span-3">
                       <p className="text-xs font-bold text-slate-500">{new Date(log.timestamp).toLocaleDateString()}</p>
                       <p className="text-[10px] text-slate-400">{new Date(log.timestamp).toLocaleTimeString()}</p>
                     </div>
-                    <div className="col-span-2">
+                    
+                    {/* Admin - col-span-2 */}
+                    <div className="md:col-span-2">
                       <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                        <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shrink-0">
                           {log.admin.charAt(0).toUpperCase()}
                         </div>
-                        <span className="text-xs font-black text-slate-700">{log.admin}</span>
+                        <span className="text-xs font-black text-slate-700 truncate">{log.admin}</span>
                       </div>
                     </div>
-                    <div className="col-span-2">
+
+                    {/* Action - col-span-2 */}
+                    <div className="md:col-span-2">
                       <Badge className={cn(
                         "text-[10px] font-black uppercase tracking-tighter border-none",
                         log.action === "UPDATE" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600"
@@ -171,15 +171,19 @@ export default function AdminAuditPage() {
                         {log.action}
                       </Badge>
                     </div>
-                    <div className="col-span-3">
-                      <code className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+
+                    {/* Target - col-span-3 */}
+                    <div className="md:col-span-3">
+                      <code className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded break-all">
                         {log.target}
                       </code>
                     </div>
-                    <div className="col-span-2 text-right">
+
+                    {/* Details - col-span-2 */}
+                    <div className="md:col-span-2 md:text-right w-full">
                       {log.details && (
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="text-[10px] font-bold text-slate-400">
+                        <div className="flex md:flex-col items-center md:items-end gap-2 md:gap-1">
+                          <span className="text-[10px] font-bold text-slate-400 shrink-0">
                             總數: {log.details.total_count || log.details.count}
                           </span>
                           {( (log.details.added?.length || 0) > 0 || (log.details.modified?.length || 0) > 0 || (log.details.deleted?.length || 0) > 0) && (
@@ -216,6 +220,7 @@ export default function AdminAuditPage() {
           </ScrollArea>
         </CardContent>
       </Card>
+
     </div>
   );
 }

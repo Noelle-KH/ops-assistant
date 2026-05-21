@@ -20,6 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -205,32 +206,32 @@ export default function AdminUsersPage() {
                 "border-slate-100 hover:border-primary/20 transition-all overflow-hidden",
                 user.status === "disabled" && "opacity-60 bg-slate-50/50"
               )}>
-                <CardContent className="p-6 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 w-full sm:w-auto">
                     <div className={cn(
-                      "h-12 w-12 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-black/5",
+                      "h-10 w-10 md:h-12 md:w-12 rounded-xl flex items-center justify-center text-white shadow-lg shadow-black/5 shrink-0",
                       ROLES.find(r => r.value === user.role)?.color || "bg-slate-400"
                     )}>
                       {(() => {
                         const Icon = ROLES.find(r => r.value === user.role)?.icon || ShieldAlert;
-                        return <Icon className="h-6 w-6" />;
+                        return <Icon className="h-5 w-5 md:h-6 md:w-6" />;
                       })()}
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-black text-slate-900">{user.displayName}</h3>
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-black text-slate-900 truncate">{user.displayName}</h3>
                         <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-widest text-slate-400 border-slate-200">
                           @{user.username}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                         <span>角色：{ROLES.find(r => r.value === user.role)?.label}</span>
-                        <span>最後登入：{user.lastLogin === "Never" ? "尚無紀錄" : new Date(user.lastLogin).toLocaleString()}</span>
+                        <span className="truncate">最後登入：{user.lastLogin === "Never" ? "尚無紀錄" : new Date(user.lastLogin).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-end sm:self-center">
                     <Button size="icon" variant="ghost" className="h-9 w-9 text-slate-400 hover:text-primary" onClick={() => {
                       setCurrentUser(user);
                       setIsEditing(true);
@@ -246,6 +247,7 @@ export default function AdminUsersPage() {
                   </div>
                 </CardContent>
               </Card>
+
             ))
           ) : (
             <div className="py-20 text-center space-y-3">
@@ -265,6 +267,9 @@ export default function AdminUsersPage() {
               </div>
               {currentUser?.id ? "修改帳號權限" : "建立新運營帳號"}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              管理系統使用者帳號、顯示姓名及角色權限分配。
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">

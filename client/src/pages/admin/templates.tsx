@@ -23,6 +23,7 @@ import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -272,21 +273,25 @@ export default function AdminTemplatesPage() {
                 </div>
                 {currentTpl?.id ? "編輯郵件模板" : "建立新郵件模板"}
               </DialogTitle>
-              <div className="flex items-center bg-white border rounded-lg p-1">
+              <DialogDescription className="sr-only">
+                郵件模板編輯器，支援多版本內容與變數定義。
+              </DialogDescription>
+              <div className="flex flex-wrap items-center bg-white border rounded-lg p-1 gap-1">
                 {[
-                  { id: "basic", label: "1. 基礎設定", icon: Settings2 },
-                  { id: "variants", label: "2. 內容與版本", icon: Layers },
+                  { id: "basic", label: "1. 基礎", icon: Settings2 },
+                  { id: "variants", label: "2. 內容", icon: Layers },
                 ].map((step) => (
                   <button
                     key={step.id}
                     onClick={() => setActiveStep(step.id as any)}
                     className={cn(
-                      "px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2",
+                      "px-2 md:px-4 py-1.5 text-[10px] md:text-xs font-bold rounded-md transition-all flex items-center gap-1 md:gap-2",
                       activeStep === step.id ? "bg-primary text-white shadow-sm" : "text-slate-400 hover:text-slate-600"
                     )}
                   >
-                    <step.icon className="h-3.5 w-3.5" />
-                    {step.label}
+                    <step.icon className="h-3 md:h-3.5 w-3 md:w-3.5" />
+                    <span className="hidden sm:inline">{step.label}</span>
+                    <span className="sm:hidden">{step.label.split(". ")[1]}</span>
                   </button>
                 ))}
               </div>
@@ -294,10 +299,10 @@ export default function AdminTemplatesPage() {
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto min-h-0">
-            <div className="p-8">
+            <div className="p-4 md:p-8">
               {activeStep === "basic" && currentTpl && (
-                <div className="space-y-8 animate-in slide-in-from-right-4 duration-300 max-w-2xl mx-auto">
-                  <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-6 md:space-y-8 animate-in slide-in-from-right-4 duration-300 max-w-2xl mx-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">模板標題</Label>
                       <Input 
@@ -332,7 +337,6 @@ export default function AdminTemplatesPage() {
                       placeholder="如: 取款, 安撫, 進度"
                       value={currentTpl.tags?.join(", ")}
                       onChange={e => {
-                        // Supports both commas and spaces as delimiters
                         const val = e.target.value;
                         const tags = val.split(/[,\s，]+/).map(t => t.trim()).filter(Boolean);
                         setCurrentTpl({...currentTpl, tags});
@@ -361,28 +365,28 @@ export default function AdminTemplatesPage() {
               )}
 
               {activeStep === "variants" && currentTpl && (
-                <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">內容版本 (Variants)</p>
-                    <Button size="sm" variant="outline" className="rounded-lg h-8 font-bold" onClick={addVariant}>
+                <div className="space-y-6 md:space-y-8 animate-in slide-in-from-right-4 duration-300">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">內容版本 (Variants)</p>
+                    <Button size="sm" variant="outline" className="rounded-lg h-8 font-bold w-full sm:w-auto" onClick={addVariant}>
                       <Plus className="mr-2 h-3.5 w-3.5" /> 增加新版本
                     </Button>
                   </div>
 
-                  <div className="space-y-8">
+                  <div className="space-y-6 md:space-y-8">
                     {currentTpl.variants?.map((variant, vIdx) => (
-                      <div key={variant.variant_id} className="p-6 rounded-2xl border border-slate-100 bg-slate-50/30 space-y-6 relative group">
+                      <div key={variant.variant_id} className="p-4 md:p-6 rounded-2xl border border-slate-100 bg-slate-50/30 space-y-6 relative group">
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="absolute top-2 right-2 h-8 w-8 text-slate-300 hover:text-red-500" 
+                          className="absolute top-2 right-2 h-8 w-8 text-slate-300 hover:text-red-500 shrink-0" 
                           onClick={() => removeVariant(vIdx)}
                           disabled={currentTpl.variants!.length <= 1}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase text-slate-400">版本標籤 (Label)</Label>
                             <Input 
@@ -412,9 +416,9 @@ export default function AdminTemplatesPage() {
                         </div>
 
                         <div className="space-y-2">
-                          <div className="flex justify-between items-center">
+                          <div className="flex justify-between items-center flex-wrap gap-2">
                             <Label className="text-[10px] font-black uppercase text-slate-400">郵件內文 (Body)</Label>
-                            <span className="text-[9px] text-slate-400 font-bold bg-slate-100 px-1.5 py-0.5 rounded">變數請使用 {"{{KEY}}"} 格式</span>
+                            <span className="text-[9px] text-slate-400 font-bold bg-slate-100 px-1.5 py-0.5 rounded shrink-0">變數請使用 {"{{KEY}}"} 格式</span>
                           </div>
                           <Textarea 
                             value={variant.body}
@@ -429,16 +433,16 @@ export default function AdminTemplatesPage() {
                         </div>
 
                         <div className="space-y-4 pt-4 border-t border-slate-100">
-                          <div className="flex justify-between items-center">
+                          <div className="flex justify-between items-center flex-wrap gap-2">
                             <Label className="text-[10px] font-black uppercase text-primary">變數欄位定義 (Fields)</Label>
                             <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] hover:text-primary" onClick={() => addField(vIdx)}>+ 增加變數</Button>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {variant.fields.map((field, fIdx) => (
                               <div key={fIdx} className="bg-white p-3 rounded-xl border border-slate-100 space-y-3 relative group/field">
                                 <button 
                                   onClick={() => removeField(vIdx, fIdx)}
-                                  className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-300 hover:text-red-500 shadow-sm opacity-0 group-hover/field:opacity-100 transition-opacity"
+                                  className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-300 hover:text-red-500 shadow-sm transition-opacity"
                                 >
                                   <X className="h-3 w-3" />
                                 </button>
@@ -470,11 +474,6 @@ export default function AdminTemplatesPage() {
                                 </div>
                               </div>
                             ))}
-                            {variant.fields.length === 0 && (
-                              <div className="col-span-full py-4 text-center border-2 border-dashed border-slate-100 rounded-xl text-[10px] text-slate-400 font-bold">
-                                無變數欄位
-                              </div>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -485,28 +484,29 @@ export default function AdminTemplatesPage() {
             </div>
           </div>
 
-          <DialogFooter className="p-6 border-t bg-slate-50/50 gap-4 shrink-0">
-            <div className="flex-1 flex gap-2">
+          <DialogFooter className="p-4 md:p-6 border-t bg-slate-50/50 gap-2 md:gap-4 shrink-0 flex-col sm:flex-row">
+            <div className="flex-1 flex gap-2 w-full">
               {activeStep !== "basic" && (
-                <Button variant="outline" className="rounded-xl font-bold" onClick={() => setActiveStep("basic")}>
+                <Button variant="outline" className="flex-1 sm:flex-none rounded-xl font-bold" onClick={() => setActiveStep("basic")}>
                   <ChevronLeft className="mr-2 h-4 w-4" /> 上一步
                 </Button>
               )}
               {activeStep === "basic" && (
-                <Button variant="outline" className="rounded-xl font-bold" onClick={() => setActiveStep("variants")}>
+                <Button variant="outline" className="flex-1 sm:flex-none rounded-xl font-bold" onClick={() => setActiveStep("variants")}>
                   下一步：編輯內文 <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </div>
-            <div className="flex gap-3">
-              <Button variant="ghost" onClick={() => setIsEditing(false)} className="rounded-xl font-bold text-slate-400">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="ghost" onClick={() => setIsEditing(false)} className="flex-1 sm:flex-none rounded-xl font-bold text-slate-400">
                 取消
               </Button>
-              <Button onClick={handleSave} disabled={isSaving} className="rounded-xl font-bold px-10 shadow-lg shadow-primary/20">
-                <Save className="mr-2 h-4 w-4" /> {isSaving ? "處理中..." : "儲存模板"}
+              <Button onClick={handleSave} disabled={isSaving} className="flex-1 sm:flex-none rounded-xl font-bold px-4 md:px-10 shadow-lg shadow-primary/20">
+                <Save className="mr-2 h-4 w-4" /> {isSaving ? "中..." : "儲存模板"}
               </Button>
             </div>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
     </div>

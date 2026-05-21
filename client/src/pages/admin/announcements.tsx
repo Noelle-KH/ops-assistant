@@ -98,6 +98,7 @@ export default function AdminAnnouncementsPage() {
       return
     }
 
+    setIsSaving(true);
     const admin = localStorage.getItem("admin_user") || "Admin"
     let updatedList = [...announcements]
     const today = new Date().toISOString().split('T')[0]
@@ -135,6 +136,8 @@ export default function AdminAnnouncementsPage() {
       }
     } catch (_err) {
       toast.error("儲存失敗，請檢查網路連線")
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -174,8 +177,8 @@ export default function AdminAnnouncementsPage() {
           <h2 className="text-2xl font-bold tracking-tight">公告管理</h2>
           <p className="text-muted-foreground text-sm">維護首頁展示的產品公告與重要通知</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative w-64">
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="搜尋公告..."
@@ -189,105 +192,90 @@ export default function AdminAnnouncementsPage() {
               setCurrentAnn({ type: "update", priority: "normal" })
               setIsEditing(true)
             }}
-            className="rounded-xl font-bold shadow-lg shadow-primary/20 gap-2"
+            className="w-full sm:w-auto rounded-xl font-bold shadow-lg shadow-primary/20 gap-2"
           >
             <Plus className="h-4 w-4" /> 發布公告
           </Button>
         </div>
       </div>
 
-      <Card className="border-none shadow-sm bg-white/50 backdrop-blur-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">公告列表</CardTitle>
-          <CardDescription>目前系統中所有發布的公告紀錄</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-xl border border-slate-100 overflow-hidden">
-            <div className="grid grid-cols-12 bg-slate-50 dark:bg-slate-900/50 border-b p-4 text-[10px] font-black uppercase tracking-widest text-slate-500">
-              <div className="col-span-6">標題與內容摘要</div>
-              <div className="col-span-2">類型</div>
-              <div className="col-span-2">日期</div>
-              <div className="col-span-2 text-right">操作</div>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {loading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="p-8 text-center animate-pulse bg-white/50" />
-                ))
-              ) : filteredAnnouncements.length > 0 ? (
-                filteredAnnouncements.map((ann) => (
-                  <div 
-                    key={ann.id} 
-                    className={cn(
-                      "grid grid-cols-12 p-4 items-center transition-colors hover:bg-slate-50/50",
-                      ann.status === "disabled" && "opacity-50 grayscale"
-                    )}
-                  >
-                    <div className="col-span-6 pr-4">
-                      <div className="font-bold text-slate-900 mb-1">{ann.title}</div>
-                      <div className="text-xs text-slate-500 line-clamp-1">{ann.content}</div>
-                    </div>
-                    <div className="col-span-2">
-                      <Badge 
-                        variant="secondary" 
-                        className={cn(
-                          "text-[10px] font-bold uppercase",
-                          ann.type === "emergency" && "bg-rose-100 text-rose-600",
-                          ann.type === "maintenance" && "bg-amber-100 text-amber-600",
-                          ann.type === "feature" && "bg-blue-100 text-blue-600"
-                        )}
-                      >
-                        {TYPES.find(t => t.value === ann.type)?.label || ann.type}
-                      </Badge>
-                    </div>
-                    <div className="col-span-2 text-xs text-slate-400 font-medium">
-                      {ann.date}
-                    </div>
-                    <div className="col-span-2 text-right space-x-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-slate-400 hover:text-primary"
-                        onClick={() => {
-                          setCurrentAnn(ann)
-                          setIsEditing(true)
-                        }}
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className={cn(
-                          "h-8 w-8",
-                          ann.status === "active" ? "text-slate-400 hover:text-amber-500" : "text-amber-500 hover:text-emerald-500"
-                        )}
-                        onClick={() => toggleStatus(ann.id)}
-                      >
-                        {ann.status === "active" ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                      </Button>
-                    </div>
+      <div className="space-y-4">
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-24 bg-slate-50 animate-pulse rounded-2xl" />
+          ))
+        ) : filteredAnnouncements.length > 0 ? (
+          filteredAnnouncements.map((ann) => (
+            <Card key={ann.id} className={cn(
+              "border-slate-100 hover:border-primary/20 transition-all overflow-hidden",
+              ann.status === "disabled" && "opacity-60 bg-slate-50/50"
+            )}>
+              <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex-1 space-y-2 w-full">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge 
+                      variant="secondary" 
+                      className={cn(
+                        "text-[10px] font-bold uppercase",
+                        ann.type === "emergency" && "bg-rose-100 text-rose-600",
+                        ann.type === "maintenance" && "bg-amber-100 text-amber-600",
+                        ann.type === "feature" && "bg-blue-100 text-blue-600"
+                      )}
+                    >
+                      {TYPES.find(t => t.value === ann.type)?.label || ann.type}
+                    </Badge>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{ann.date}</span>
+                    <Badge variant="outline" className={cn("text-[10px] font-bold uppercase", PRIORITIES.find(p => p.value === ann.priority)?.color)}>
+                      {PRIORITIES.find(p => p.value === ann.priority)?.label}
+                    </Badge>
                   </div>
-                ))
-              ) : (
-                <div className="p-12 text-center">
-                  <AlertCircle className="h-10 w-10 text-slate-200 mx-auto mb-3" />
-                  <p className="text-slate-400 text-sm">目前沒有任何公告</p>
+                  <h3 className="font-bold text-slate-900 leading-tight">{ann.title}</h3>
+                  <p className="text-xs text-slate-500 line-clamp-2">{ann.content}</p>
                 </div>
-              )}
-            </div>
+                
+                <div className="flex items-center gap-2 self-end sm:self-center">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9 text-slate-400 hover:text-primary"
+                    onClick={() => {
+                      setCurrentAnn(ann)
+                      setIsEditing(true)
+                    }}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={cn(
+                      "h-9 w-9",
+                      ann.status === "active" ? "text-slate-400 hover:text-amber-500" : "text-amber-500 hover:text-emerald-500"
+                    )}
+                    onClick={() => toggleStatus(ann.id)}
+                  >
+                    {ann.status === "active" ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="py-20 text-center space-y-3 bg-white/50 rounded-2xl border border-dashed">
+            <AlertCircle className="h-10 w-10 text-slate-200 mx-auto" />
+            <p className="text-slate-400 font-medium">目前沒有任何公告</p>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-xl w-[95vw] rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-black">
               {currentAnn?.id ? "編輯公告" : "發布新公告"}
             </DialogTitle>
-            <DialogDescription>
-              在此填寫公告的詳細資訊，完成後點擊儲存。
+            <DialogDescription className="sr-only">
+              發布或編輯系統公告，包含標題、類型、優先級及詳細內容。
             </DialogDescription>
           </DialogHeader>
           
@@ -302,7 +290,7 @@ export default function AdminAnnouncementsPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">類型</Label>
                 <Select 
@@ -355,11 +343,11 @@ export default function AdminAnnouncementsPage() {
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsEditing(false)} className="rounded-xl font-bold">
+          <DialogFooter className="gap-2 flex-col sm:flex-row">
+            <Button variant="ghost" onClick={() => setIsEditing(false)} className="rounded-xl font-bold text-slate-400">
               取消
             </Button>
-            <Button onClick={handleSave} disabled={isSaving} className="rounded-xl font-bold px-8">
+            <Button onClick={handleSave} disabled={isSaving} className="rounded-xl font-bold px-8 shadow-lg shadow-primary/20">
               <Save className="mr-2 h-4 w-4" /> 
               {isSaving ? "處理中..." : (currentAnn?.id ? "儲存變更" : "立即發布")}
             </Button>
@@ -369,3 +357,4 @@ export default function AdminAnnouncementsPage() {
     </div>
   )
 }
+

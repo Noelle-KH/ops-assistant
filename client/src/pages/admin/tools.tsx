@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -235,11 +236,14 @@ export default function AdminToolsPage() {
               </div>
               {currentTool?.id ? "編輯系統工具" : "建立新系統工具"}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              管理系統連結及相關登入帳號資訊。
+            </DialogDescription>
           </DialogHeader>
 
           <ScrollArea className="max-h-[70vh]">
-            <div className="p-8 space-y-8">
-              <div className="grid grid-cols-2 gap-6">
+            <div className="p-4 md:p-8 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">工具/系統名稱</Label>
                   <Input 
@@ -268,7 +272,7 @@ export default function AdminToolsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">系統網址 (URL)</Label>
                   <Input 
@@ -302,11 +306,11 @@ export default function AdminToolsPage() {
                     <div key={index} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 relative group">
                       <button 
                         onClick={() => removeAccount(index)}
-                        className="absolute -top-2 -right-2 h-6 w-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-300 hover:text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute -top-2 -right-2 h-6 w-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-300 hover:text-red-500 shadow-sm transition-opacity"
                       >
                         <X className="h-3 w-3" />
                       </button>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="space-y-1">
                           <Label className="text-[9px] font-black text-slate-400">角色/用途</Label>
                           <Input 
@@ -368,6 +372,7 @@ export default function AdminToolsPage() {
                       </div>
                     </div>
                   ))}
+
                   {(!currentTool?.accounts || currentTool.accounts.length === 0) && (
                     <div className="py-8 text-center border-2 border-dashed border-slate-100 rounded-xl text-[10px] text-slate-400 font-bold uppercase tracking-widest">
                       無帳號資訊

@@ -22,6 +22,7 @@ import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -266,22 +267,26 @@ export default function AdminSopPage() {
                 </div>
                 {currentSop?.id ? "編輯 SOP 流程" : "建立新 SOP 流程"}
               </DialogTitle>
-              <div className="flex items-center bg-white border rounded-lg p-1">
+              <DialogDescription className="sr-only">
+                SOP 編輯表單，包含規則條件、操作步驟與例外處理。
+              </DialogDescription>
+              <div className="flex flex-wrap items-center bg-white border rounded-lg p-1 gap-1">
                 {[
-                  { id: "basic", label: "1. 規則條件", icon: FileText },
-                  { id: "steps", label: "2. 操作步驟", icon: ListOrdered },
-                  { id: "exceptions", label: "3. 例外與關聯", icon: Zap },
+                  { id: "basic", label: "1. 規則", icon: FileText },
+                  { id: "steps", label: "2. 步驟", icon: ListOrdered },
+                  { id: "exceptions", label: "3. 例外", icon: Zap },
                 ].map((step) => (
                   <button
                     key={step.id}
                     onClick={() => setActiveStep(step.id as any)}
                     className={cn(
-                      "px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-2",
+                      "px-2 md:px-4 py-1.5 text-[10px] md:text-xs font-bold rounded-md transition-all flex items-center gap-1 md:gap-2",
                       activeStep === step.id ? "bg-primary text-white shadow-sm" : "text-slate-400 hover:text-slate-600"
                     )}
                   >
-                    <step.icon className="h-3.5 w-3.5" />
-                    {step.label}
+                    <step.icon className="h-3 md:h-3.5 w-3 md:w-3.5" />
+                    <span className="hidden sm:inline">{step.label}</span>
+                    <span className="sm:hidden">{step.label.split(". ")[1]}</span>
                   </button>
                 ))}
               </div>
@@ -289,10 +294,10 @@ export default function AdminSopPage() {
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto min-h-0">
-            <div className="p-8">
+            <div className="p-4 md:p-8">
               {activeStep === "basic" && currentSop && (
-                <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-                  <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-6 md:space-y-8 animate-in slide-in-from-right-4 duration-300">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">SOP 標題</Label>
                       <Input 
@@ -331,7 +336,7 @@ export default function AdminSopPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                     <div className="space-y-4">
                       <Label className="text-[10px] font-black uppercase text-primary tracking-widest flex justify-between items-center">
                         適用條件
@@ -350,7 +355,7 @@ export default function AdminSopPage() {
                               className="h-10 rounded-lg text-sm"
                               placeholder="輸入條件..."
                             />
-                            <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-300 hover:text-red-500" onClick={() => removeArrayItem("conditions", i)}>
+                            <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-300 hover:text-red-500 shrink-0" onClick={() => removeArrayItem("conditions", i)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -376,7 +381,7 @@ export default function AdminSopPage() {
                               className="h-10 rounded-lg text-sm"
                               placeholder="輸入限制..."
                             />
-                            <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-300 hover:text-red-500" onClick={() => removeArrayItem("restrictions", i)}>
+                            <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-300 hover:text-red-500 shrink-0" onClick={() => removeArrayItem("restrictions", i)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -388,22 +393,22 @@ export default function AdminSopPage() {
               )}
 
               {activeStep === "steps" && currentSop && (
-                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 px-4">
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">OA 標準操作路徑與步驟</p>
-                    <Button size="sm" variant="outline" className="rounded-lg h-8 font-bold" onClick={() => addArrayItem("steps")}>
+                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 px-1 md:px-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">OA 標準操作路徑與步驟</p>
+                    <Button size="sm" variant="outline" className="rounded-lg h-8 font-bold w-full sm:w-auto" onClick={() => addArrayItem("steps")}>
                       <Plus className="mr-2 h-3.5 w-3.5" /> 增加步驟
                     </Button>
                   </div>
                   
                   <div className="space-y-4">
                     {currentSop.operation?.steps.map((step, i) => (
-                      <div key={i} className="group relative p-6 pl-10 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all">
+                      <div key={i} className="group relative p-4 md:p-6 pl-10 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all">
                         <div className="absolute -left-3 top-6 h-8 w-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-xs shadow-lg z-10">
                           {i + 1}
                         </div>
                         <div className="space-y-4">
-                          <div className="flex gap-4">
+                          <div className="flex gap-2 md:gap-4">
                             <div className="flex-1 space-y-2">
                               <Label className="text-[10px] font-black uppercase text-slate-400">操作動作</Label>
                               <Input 
@@ -417,7 +422,7 @@ export default function AdminSopPage() {
                                 placeholder="描述此步驟需要執行的動作..."
                               />
                             </div>
-                            <Button variant="ghost" size="icon" className="mt-6 text-slate-300 hover:text-red-500" onClick={() => removeArrayItem("steps", i)}>
+                            <Button variant="ghost" size="icon" className="mt-6 text-slate-300 hover:text-red-500 shrink-0" onClick={() => removeArrayItem("steps", i)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -447,19 +452,19 @@ export default function AdminSopPage() {
               {activeStep === "exceptions" && currentSop && (
                 <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
                   <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">例外情況與處理方式</p>
-                      <Button size="sm" variant="outline" className="rounded-lg h-8 font-bold" onClick={() => addArrayItem("exceptions")}>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">例外情況與處理方式</p>
+                      <Button size="sm" variant="outline" className="rounded-lg h-8 font-bold w-full sm:w-auto" onClick={() => addArrayItem("exceptions")}>
                         <Plus className="mr-2 h-3.5 w-3.5" /> 增加情境
                       </Button>
                     </div>
                     <div className="space-y-4">
                       {currentSop.exceptions?.map((exc, i) => (
-                        <div key={i} className="p-6 rounded-2xl border border-orange-100 bg-orange-50/20 space-y-4 relative group">
+                        <div key={i} className="p-4 md:p-6 rounded-2xl border border-orange-100 bg-orange-50/20 space-y-4 relative group">
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="absolute top-2 right-2 h-8 w-8 text-orange-200 hover:text-red-500" 
+                            className="absolute top-2 right-2 h-8 w-8 text-orange-200 hover:text-red-500 shrink-0" 
                             onClick={() => removeArrayItem("exceptions", i)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -492,11 +497,6 @@ export default function AdminSopPage() {
                           </div>
                         </div>
                       ))}
-                      {currentSop.exceptions?.length === 0 && (
-                        <div className="py-12 text-center border-2 border-dashed border-slate-100 rounded-2xl text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                          無例外處理情境
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -519,28 +519,29 @@ export default function AdminSopPage() {
             </div>
           </div>
 
-          <DialogFooter className="p-6 border-t bg-slate-50/50 gap-4 shrink-0">
-            <div className="flex-1 flex gap-2">
+          <DialogFooter className="p-4 md:p-6 border-t bg-slate-50/50 gap-2 md:gap-4 shrink-0 flex-col sm:flex-row">
+            <div className="flex-1 flex gap-2 w-full">
               {activeStep !== "basic" && (
-                <Button variant="outline" className="rounded-xl font-bold" onClick={() => setActiveStep(activeStep === "exceptions" ? "steps" : "basic")}>
+                <Button variant="outline" className="flex-1 sm:flex-none rounded-xl font-bold" onClick={() => setActiveStep(activeStep === "exceptions" ? "steps" : "basic")}>
                   <ChevronLeft className="mr-2 h-4 w-4" /> 上一步
                 </Button>
               )}
               {activeStep !== "exceptions" && (
-                <Button variant="outline" className="rounded-xl font-bold" onClick={() => setActiveStep(activeStep === "basic" ? "steps" : "exceptions")}>
+                <Button variant="outline" className="flex-1 sm:flex-none rounded-xl font-bold" onClick={() => setActiveStep(activeStep === "basic" ? "steps" : "exceptions")}>
                   下一步 <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </div>
-            <div className="flex gap-3">
-              <Button variant="ghost" onClick={() => setIsEditing(false)} className="rounded-xl font-bold text-slate-400">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="ghost" onClick={() => setIsEditing(false)} className="flex-1 sm:flex-none rounded-xl font-bold text-slate-400">
                 取消
               </Button>
-              <Button onClick={handleSave} disabled={isSaving} className="rounded-xl font-bold px-10 shadow-lg shadow-primary/20">
-                <Save className="mr-2 h-4 w-4" /> {isSaving ? "處理中..." : "儲存 SOP 流程"}
+              <Button onClick={handleSave} disabled={isSaving} className="flex-1 sm:flex-none rounded-xl font-bold px-4 md:px-10 shadow-lg shadow-primary/20">
+                <Save className="mr-2 h-4 w-4" /> {isSaving ? "中..." : "儲存 SOP"}
               </Button>
             </div>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
     </div>
