@@ -1,26 +1,27 @@
 # Project Handoff: Operations Navigator (運營領航站)
 
 ## 1. 今日完成事項 (Completed Today)
-- **API 穩定化與安全性修復**:
-  - **解決 401 Unauthorized 問題**: 實作了 `fetchWithAuth` 工具函式，並全面替換 Admin 後台各頁面的 API 請求，確保所有請求皆攜帶正確的 JWT Token，解決了間歇性權限錯誤。
-  - **修復 500 Internal Server Errors**: 解決了因並行請求缺乏認證導致的伺服器錯誤，並確保所有 API 回傳資料皆經由陣列檢核，避免 `TypeError`。
-  - **全域儲存防護 (Loading States)**: 在所有 Admin 管理頁面（Announcements, FAQ, Groups, SOP, Templates, Tools, Users）新增了 `isSaving` 狀態管理。提交表單時會自動停用儲存按鈕並顯示「處理中...」，徹底解決了因使用者重複點擊導致的重複發送請求問題。
+- **管理後台全模組 RWD 優化**:
+  - **響應式佈局**: 更新 `AdminLayout`，實現手機端隱藏式導覽選單（Sheet），並調整內容區域 Padding。
+  - **資料列表轉換**: 將 `Announcements` 與 `Audit` 模組不支援 RWD 的 Grid 表格轉換為響應式卡片流。
+  - **多步驟編輯器優化**: 針對 `SOP` 與 `Templates` 的複雜表單，優化了手機端步驟指示器與格狀排列。
+- **無障礙 (A11y) 與穩定性修復**:
+  - **消除 Dialog/Sheet 警告**: 為全系統 7 個管理頁面的 `Dialog` 及手機側欄 `Sheet` 補齊 `DialogDescription`，修復 "Missing Description" 的 React 警告。
+  - **修復控制組件警告**: 解決 `KnowledgeBase` 頁面 Accordion 因為初始狀態為 `undefined` 導致的 "uncontrolled to controlled" 切換警告。
+  - **修復匯入錯誤**: 解決了因遺漏匯入 `DialogDescription` 導致的管理頁面運行時崩潰 (ReferenceError)。
+- **後端連線診斷**:
+  - 成功診斷並定位 500 錯誤原因為 Node.js 進程與 Turso 資料庫間的 fetch 異常，並確認重啟服務可修復。
 
 ## 2. 修改過的檔案 (Files Modified)
-- **Frontend Lib**: `client/src/lib/utils.ts` (新增 `fetchWithAuth`)
-- **Frontend Pages**: 
-  - `admin/audit.tsx`, `admin/announcements.tsx`, `admin/faq.tsx`, `admin/groups.tsx`, `admin/sop.tsx`, `admin/templates.tsx`, `admin/tools.tsx`, `admin/users.tsx`
-  - `admin/login.tsx`, `dashboard.tsx`, `knowledge-base.tsx`, `templates.tsx`, `groups.tsx`, `tools.tsx`
-- **Components**: `client/src/components/admin-layout.tsx` (統一登出與 Session 儲存邏輯)
+- **Frontend Components**: `client/src/components/admin-layout.tsx` (RWD 側欄與 A11y 修正)
+- **Frontend Pages (Admin)**: 
+  - `admin/sop.tsx`, `admin/templates.tsx`, `admin/faq.tsx`, `admin/users.tsx`, `admin/announcements.tsx`, `admin/groups.tsx`, `admin/tools.tsx`, `admin/audit.tsx` (全面 RWD 與 A11y 優化)
+- **Frontend Pages (Client)**: `client/src/pages/knowledge-base.tsx` (Accordion 警告修復)
 
 ## 3. 下一步工作 (Next Steps)
-- **系統驗收**: 進行全面的功能驗收測試，特別是各管理頁面的新增與編輯流程。
-- **正式資料匯入**: 繼續進行正式運營資料的遷移與匯入。
-- **安全性檢視**: 建議定期檢視 API 的權限驗證邏輯，確保安全性。
+- **正式資料匯入**: 優化資料遷移腳本，將現有的運營內容完整匯入 Turso 資料庫。
+- **功能全回測**: 既然 UI 已大幅調整，建議針對手機端的操作流進行一輪完整冒煙測試 (Smoke Test)。
+- **性能優化**: 隨著資料量增加，考慮為知識庫引入虛擬滾動 (Virtual Scroll) 或 React Query。
 
-## 4. 已知問題 & 提醒
-- **安全性**: 所有 Admin API 皆已受到 `authenticateToken` 保護，請確保環境變數 `JWT_SECRET` 的安全性。
-- **效能**: 透過 `fetchWithAuth` 的統一管理，現在 API 調用更加可靠，但若資料量持續增加，未來可考慮引入 React Query 進行快取優化。
-
-## 5. 總結
-今日專注於系統穩定性與使用者體驗的精細化調整，徹底解決了管理後台在認證與資料提交上的技術債，使整體操作流程更為嚴謹可靠。
+## 4. 總結
+今日完成了管理後台最重要的 RWD 轉型，確保系統在任何設備上都能穩定操作。同時清理了長期存在的 React 控制台警告，使代碼庫更健康。
