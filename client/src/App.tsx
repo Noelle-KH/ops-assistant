@@ -31,6 +31,7 @@ function App() {
   return (
     <Router>
       <TooltipProvider>
+        <Toaster position="top-center" richColors />
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -60,7 +61,6 @@ function App() {
                     </Routes>
                   </div>
                 </main>
-                <Toaster position="top-center" richColors />
               </SidebarProvider>
             </AuthGuard>
           } />

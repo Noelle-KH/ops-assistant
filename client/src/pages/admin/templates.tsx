@@ -289,6 +289,30 @@ export default function AdminTemplatesPage() {
                   </Button>
                 </div>
               </div>
+
+              <div className="flex items-center gap-2 mb-2">
+                <Label className="text-[9px] font-black text-slate-400 uppercase">排序</Label>
+                <Input 
+                  type="number"
+                  className="h-6 w-12 text-[10px] px-1 text-center font-bold"
+                  value={tpl.sort_order || 0}
+                  onChange={async (e) => {
+                    const val = parseInt(e.target.value) || 0;
+                    const updatedTpls = templates.map(t => t.id === tpl.id ? { ...t, sort_order: val } : t);
+                    setTemplates(updatedTpls);
+                    
+                    const admin = localStorage.getItem("user_name") || "Admin";
+                    try {
+                      await fetchWithAuth(`${API_BASE_URL}/api/admin/update/templates`, {
+                        method: "POST",
+                        body: JSON.stringify({ data: updatedTpls, admin })
+                      });
+                    } catch (err) {
+                      console.error("Failed to save sort order:", err);
+                    }
+                  }}
+                />
+              </div>
               
               <ScrollArea className="flex-1 pr-4 mb-2">
                 <h3 className="text-lg font-black text-slate-900 leading-tight">{tpl.title}</h3>
@@ -347,8 +371,8 @@ export default function AdminTemplatesPage() {
             <div className="p-4 md:p-8">
               {activeStep === "basic" && currentTpl && (
                 <div className="space-y-6 md:space-y-8 animate-in slide-in-from-right-4 duration-300 max-w-2xl mx-auto">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                    <div className="space-y-2 col-span-1">
                       <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">模板標題</Label>
                       <Input 
                         placeholder="如: 取款進度回覆" 
@@ -357,7 +381,7 @@ export default function AdminTemplatesPage() {
                         onChange={e => setCurrentTpl({...currentTpl, title: e.target.value})}
                       />
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-3 col-span-1">
                       <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex justify-between">
                         分類
                         {isAddingNewCategory ? (
@@ -397,6 +421,16 @@ export default function AdminTemplatesPage() {
                           ))}
                         </div>
                       )}
+                    </div>
+                    <div className="space-y-2 col-span-1">
+                      <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">排序權重 (小越前)</Label>
+                      <Input 
+                        type="number"
+                        placeholder="0"
+                        className="h-11 rounded-xl font-bold"
+                        value={currentTpl.sort_order || 0}
+                        onChange={e => setCurrentTpl({...currentTpl, sort_order: parseInt(e.target.value) || 0})}
+                      />
                     </div>
                   </div>
 

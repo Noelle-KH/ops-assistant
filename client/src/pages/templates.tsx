@@ -1,10 +1,17 @@
 import { useState, useEffect } from "react";
-import { Search, Mail, Copy, Check, Info, ExternalLink, X, RotateCcw, AlertTriangle } from "lucide-react";
+import { Search, Mail, Copy, Check, Info, ExternalLink, X, RotateCcw, AlertTriangle, ArrowUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -41,9 +48,12 @@ interface EmailTemplate {
   linked_sop?: string;
   updated_at: string;
   status: "active" | "disabled";
+  sort_order?: number;
 }
 
 const CATEGORIES = ["全部", "取款類", "帳戶變更類", "開戶類", "審查類", "其他"];
+
+type SortMethod = "default" | "newest";
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -53,6 +63,7 @@ export default function TemplatesPage() {
   const [expandedTpl, setExpandedTpl] = useState<string | null>(null);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sortMethod, setSortMethod] = useState<SortMethod>("default");
   const [searchParams] = useSearchParams();
   
   // Warning Dialog State
@@ -99,6 +110,12 @@ export default function TemplatesPage() {
       tpl.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()));
     const matchesCategory = selectedCategory === "全部" || tpl.category === selectedCategory;
     return matchesSearch && matchesCategory;
+  }).sort((a, b) => {
+    if (sortMethod === "default") {
+      return (a.sort_order || 0) - (b.sort_order || 0);
+    } else {
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    }
   });
 
   const handleFieldChange = (key: string, value: string) => {
@@ -211,22 +228,32 @@ export default function TemplatesPage() {
         </div>
       </section>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
-        <Input
-          placeholder="搜尋模板標題、標籤或關鍵字..."
-          className="pl-11 h-12 bg-white shadow-sm border-slate-200 focus:ring-primary rounded-xl"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="flex flex-col md:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
+          <Input
+            placeholder="搜尋模板標題、標籤或關鍵字..."
+            className="pl-11 h-12 bg-white shadow-sm border-slate-200 focus:ring-primary rounded-xl"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <Select value={sortMethod} onValueChange={(v) => setSortMethod(v as SortMethod)}>
+          <SelectTrigger className="w-[140px] h-12 rounded-xl bg-white shadow-sm border-slate-200 font-bold text-slate-600">
+            <ArrowUpDown className="mr-2 h-4 w-4 text-slate-400" />
+            <SelectValue placeholder="排序方式" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="default" className="font-bold">預設排序</SelectItem>
+            <SelectItem value="newest" className="font-bold">最新更新</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <ScrollArea className="h-[calc(100vh-20rem)] rounded-2xl border bg-slate-50/30 p-1">
         <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
           {loading ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} className="h-40 animate-pulse bg-slate-100 border-none shadow-none" />
-            ))
+            <Card className="h-40 animate-pulse bg-slate-100 border-none shadow-none" />
           ) : filteredTemplates.length > 0 ? (
             filteredTemplates.map((tpl) => (
               <Card key={tpl.id} className="group overflow-hidden border-slate-200 hover:shadow-xl transition-all duration-500 bg-white">

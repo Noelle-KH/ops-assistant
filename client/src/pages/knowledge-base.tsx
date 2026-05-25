@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
-import { Search, Info, Globe, ExternalLink, Mail, ChevronRight, BookOpen } from "lucide-react";
+import { Search, Info, Globe, ExternalLink, Mail, ChevronRight, BookOpen, ArrowUpDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
@@ -8,13 +8,20 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { API_BASE_URL, fetchWithAuth } from "@/lib/utils";
+import { API_BASE_URL, fetchWithAuth, cn } from "@/lib/utils";
 
   // --- Interfaces ---
 interface FAQItem {
@@ -29,6 +36,7 @@ interface FAQItem {
   linked_template?: string;
   updated_at: string;
   status: "active" | "disabled";
+  sort_order?: number;
 }
 
 interface SOPItem {
@@ -49,10 +57,13 @@ interface SOPItem {
   linked_template?: string[];
   updated_at: string;
   status: "active" | "disabled";
+  sort_order?: number;
 }
 
 // --- Constants ---
 const FAQ_CATEGORIES = ["全部", "開戶", "交易帳戶", "入金", "出金", "交易", "代理", "活動"];
+
+type SortMethod = "default" | "newest";
 
 export default function KnowledgeBasePage() {
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
@@ -61,6 +72,7 @@ export default function KnowledgeBasePage() {
   const [selectedCategory, setSelectedCategory] = useState("全部");
   const [loading, setLoading] = useState(true);
   const [showEnglish, setShowEnglish] = useState<Record<string, boolean>>({});
+  const [sortMethod, setSortMethod] = useState<SortMethod>("default");
   
   // URL Params & Search Params
   const params = useParams<{ id: string }>();
@@ -141,6 +153,12 @@ export default function KnowledgeBasePage() {
     const matchesCategory = selectedCategory === "全部" || faq.category === selectedCategory;
     
     return matchesSearch && matchesCategory;
+  }).sort((a, b) => {
+    if (sortMethod === "default") {
+      return (a.sort_order || 0) - (b.sort_order || 0);
+    } else {
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    }
   });
 
   const handleOpenSop = (sopId: string) => {
@@ -286,26 +304,39 @@ export default function KnowledgeBasePage() {
 
         <div className="flex flex-col md:flex-row gap-4 items-center">
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="搜尋問題、內容或標籤..."
-              className="pl-10 h-11 bg-white shadow-sm border-slate-200 focus:border-primary"
+              className="pl-10 h-11 bg-white shadow-sm border-slate-200 focus:border-primary rounded-xl"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-            {FAQ_CATEGORIES.map(category => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                size="sm"
-                className="whitespace-nowrap rounded-full px-4 h-9 font-bold"
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category}
-              </Button>
-            ))}
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Select value={sortMethod} onValueChange={(v) => setSortMethod(v as SortMethod)}>
+              <SelectTrigger className="w-[140px] h-11 rounded-xl bg-white shadow-sm border-slate-200 font-bold text-slate-600">
+                <ArrowUpDown className="mr-2 h-4 w-4 text-slate-400" />
+                <SelectValue placeholder="排序方式" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default" className="font-bold">預設排序</SelectItem>
+                <SelectItem value="newest" className="font-bold">最新更新</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+              {FAQ_CATEGORIES.map(category => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? "default" : "outline"}
+                  size="sm"
+                  className="whitespace-nowrap rounded-full px-4 h-9 font-bold"
+                  onClick={() => setSelectedCategory(category)}
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

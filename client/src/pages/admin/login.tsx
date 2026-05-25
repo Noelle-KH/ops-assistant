@@ -10,10 +10,12 @@ import { API_BASE_URL } from "@/lib/utils";
 export default function AdminLoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
@@ -24,11 +26,16 @@ export default function AdminLoginPage() {
       const result = await res.json();
 
       if (res.ok) {
+        if (result.user.role !== "admin") {
+          toast.error("權限不足，僅限管理員登入");
+          setLoading(false);
+          return;
+        }
         localStorage.setItem("user_token", result.token);
         localStorage.setItem("user_name", result.user.displayName || result.user.username);
         localStorage.setItem("user_role", result.user.role);
         localStorage.setItem("last_activity", Date.now().toString());
-        toast.success(`登入成功，歡迎 ${result.user.displayName || result.user.username}`);
+        toast.success(`管理員登入成功，歡迎 ${result.user.displayName || result.user.username}`);
         navigate("/admin/dashboard");
       } else {
         toast.error(result.error || "帳號或密碼錯誤");
@@ -36,6 +43,8 @@ export default function AdminLoginPage() {
     } catch (error) {
       console.error("Login failed:", error);
       toast.error("伺服器連線失敗");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,6 +72,7 @@ export default function AdminLoginPage() {
                   className="pl-10 h-11 bg-slate-50/50 border-slate-200"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  disabled={loading}
                   required
                 />
               </div>
@@ -78,11 +88,12 @@ export default function AdminLoginPage() {
                   className="pl-10 h-11 bg-slate-50/50 border-slate-200"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
                   required
                 />
               </div>
-              </div>            <Button type="submit" className="w-full h-11 font-bold text-base mt-2 shadow-lg shadow-primary/20">
-              確認進入
+              </div>            <Button type="submit" disabled={loading} className="w-full h-11 font-bold text-base mt-2 shadow-lg shadow-primary/20">
+              {loading ? "登入中..." : "確認進入"}
             </Button>
           </form>
           <p className="text-center text-[10px] text-slate-400 mt-6 font-medium">

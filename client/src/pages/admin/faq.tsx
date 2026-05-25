@@ -262,31 +262,57 @@ export default function AdminFaqPage() {
                     </ScrollArea>
                   </div>
                   
-                  <div className="flex items-center gap-1 shrink-0 self-start">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 text-slate-400 hover:text-primary"
-                      onClick={() => {
-                        setCurrentFaq(faq);
-                        setTagInput(faq.tags.join(", "));
-                        setIsEditing(true);
-                      }}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className={cn(
-                        "h-8 w-8 transition-colors",
-                        faq.status === "active" ? "text-slate-400 hover:text-amber-500" : "text-amber-500 hover:text-emerald-500"
-                      )}
-                      onClick={() => toggleStatus(faq.id)}
-                      title={faq.status === "active" ? "停用" : "啟用"}
-                    >
-                      {faq.status === "active" ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
+                  <div className="flex flex-col items-center gap-1 shrink-0 self-start">
+                    <div className="flex items-center gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-slate-400 hover:text-primary"
+                        onClick={() => {
+                          setCurrentFaq(faq);
+                          setTagInput(faq.tags.join(", "));
+                          setIsEditing(true);
+                        }}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className={cn(
+                          "h-8 w-8 transition-colors",
+                          faq.status === "active" ? "text-slate-400 hover:text-amber-500" : "text-amber-500 hover:text-emerald-500"
+                        )}
+                        onClick={() => toggleStatus(faq.id)}
+                        title={faq.status === "active" ? "停用" : "啟用"}
+                      >
+                        {faq.status === "active" ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Label className="text-[9px] font-black text-slate-400 uppercase">排序</Label>
+                      <Input 
+                        type="number"
+                        className="h-6 w-12 text-[10px] px-1 text-center font-bold"
+                        value={faq.sort_order || 0}
+                        onChange={async (e) => {
+                          const val = parseInt(e.target.value) || 0;
+                          const updatedFaqs = faqs.map(f => f.id === faq.id ? { ...f, sort_order: val } : f);
+                          setFaqs(updatedFaqs);
+                          
+                          // Auto-save sort order change
+                          const admin = localStorage.getItem("user_name") || "Admin";
+                          try {
+                            await fetchWithAuth(`${API_BASE_URL}/api/admin/update/faq`, {
+                              method: "POST",
+                              body: JSON.stringify({ data: updatedFaqs, admin })
+                            });
+                          } catch (err) {
+                            console.error("Failed to save sort order:", err);
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -312,8 +338,8 @@ export default function AdminFaqPage() {
           </DialogHeader>
           
           <div className="space-y-6 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-3 col-span-1">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex justify-between">
                   分類
                   {isAddingNewCategory ? (
@@ -357,12 +383,23 @@ export default function AdminFaqPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 col-span-1">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">標籤 (以逗號分隔)</Label>
                 <Input 
                   placeholder="如: 開戶, 年齡, 審核"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
+                  className="rounded-xl"
+                />
+              </div>
+
+              <div className="space-y-2 col-span-1">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">排序權重 (小越前)</Label>
+                <Input 
+                  type="number"
+                  placeholder="0"
+                  value={currentFaq?.sort_order || 0}
+                  onChange={(e) => setCurrentFaq(prev => ({ ...prev!, sort_order: parseInt(e.target.value) || 0 }))}
                   className="rounded-xl"
                 />
               </div>
