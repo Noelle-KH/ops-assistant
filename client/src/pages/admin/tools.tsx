@@ -42,8 +42,6 @@ interface ToolItem {
   accounts?: AccountInfo[];
 }
 
-const CATEGORIES = ["後台系統", "測試資源", "敏感資源", "其他"];
-
 export default function AdminToolsPage() {
   const [tools, setTools] = useState<ToolItem[]>([]);
   const [search, setSearch] = useState("");
@@ -51,6 +49,12 @@ export default function AdminToolsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentTool, setCurrentTool] = useState<Partial<ToolItem> | null>(null);
+  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  // Get unique categories from existing tools
+  const existingCategories = Array.from(new Set(tools.map(t => t.category))).filter(Boolean);
+  const displayCategories = existingCategories.length > 0 ? existingCategories : ["一般"];
 
   const fetchTools = async () => {
     setLoading(true);
@@ -253,22 +257,46 @@ export default function AdminToolsPage() {
                     onChange={e => setCurrentTool({...currentTool!, name: e.target.value})}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">分類</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {CATEGORIES.map(cat => (
-                      <button
-                        key={cat}
-                        onClick={() => setCurrentTool({...currentTool!, category: cat})}
-                        className={cn(
-                          "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all",
-                          currentTool?.category === cat ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:border-primary/50"
-                        )}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex justify-between">
+                    分類
+                    {isAddingNewCategory ? (
+                      <button onClick={() => setIsAddingNewCategory(false)} className="text-primary hover:underline font-bold">選擇現有</button>
+                    ) : (
+                      <button onClick={() => {
+                        setIsAddingNewCategory(true);
+                        setNewCategoryName("");
+                      }} className="text-primary hover:underline font-bold">+ 新增分類</button>
+                    )}
+                  </Label>
+                  
+                  {isAddingNewCategory ? (
+                    <Input 
+                      placeholder="輸入新分類名稱..."
+                      value={newCategoryName}
+                      onChange={(e) => {
+                        setNewCategoryName(e.target.value);
+                        setCurrentTool(prev => ({ ...prev!, category: e.target.value }));
+                      }}
+                      className="h-11 rounded-xl border-primary/30 focus:border-primary font-bold"
+                      autoFocus
+                    />
+                  ) : (
+                    <div className="flex flex-wrap gap-2 p-3 rounded-xl border border-slate-100 bg-slate-50/50">
+                      {displayCategories.map(cat => (
+                        <button
+                          key={cat}
+                          onClick={() => setCurrentTool({...currentTool!, category: cat})}
+                          className={cn(
+                            "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all",
+                            currentTool?.category === cat ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:border-primary/50"
+                          )}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

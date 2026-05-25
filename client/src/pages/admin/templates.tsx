@@ -57,43 +57,53 @@ interface EmailTemplate {
   linked_sop?: string;
   updated_at: string;
   status: "active" | "disabled";
+  sort_order?: number;
 }
 
-const CATEGORIES = ["取款類", "帳戶變更類", "開戶類", "審查類", "其他"];
 export default function AdminTemplatesPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [allCategories, setAllCategories] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentTpl, setCurrentTpl] = useState<Partial<EmailTemplate> | null>(null);
   const [activeStep, setActiveStep] = useState<"basic" | "variants">("basic");
+  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
-  const fetchTemplates = async () => {
+  // Filter categories for Template display
+  const templateCategories = allCategories.filter(c => c.type === "template");
+  const displayCategories = templateCategories.length > 0 ? templateCategories.map(c => c.name) : ["一般"];
+
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/api/templates`);
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setTemplates(data);
-      } else {
-        setTemplates([]);
-      }
-    } catch {
-      toast.error("無法載入模板資料");
+      const [tplRes, catRes] = await Promise.all([
+        fetchWithAuth(`${API_BASE_URL}/api/templates`),
+        fetchWithAuth(`${API_BASE_URL}/api/categories`)
+      ]);
+      
+      const tplData = await tplRes.json();
+      const catData = await catRes.json();
+      
+      if (Array.isArray(tplData)) setTemplates(tplData);
+      if (Array.isArray(catData)) setAllCategories(catData);
+    } catch (_err) {
+      toast.error("無法載入資料");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTemplates();
+    void fetchData();
   }, []);
 
   const initNewTemplate = () => {
     setCurrentTpl({
       title: "",
-      category: "其他",
+      category: displayCategories[0] || "其他",
       tags: [],
       variants: [{
         variant_id: `var_${Date.now()}`,
@@ -116,14 +126,38 @@ export default function AdminTemplatesPage() {
 
     setIsSaving(true);
     const admin = localStorage.getItem("user_name") || "Admin";
-    let updatedTemplates = [...templates];
     const now = new Date().toISOString().split('T')[0];
+
+    // 1. Handle Categories Update if new one added
+    let updatedCategories = [...allCategories];
+    const categoryExists = allCategories.some(c => c.name === currentTpl.category && c.type === "template");
+    
+    if (!categoryExists) {
+      const newCat = {
+        id: `cat_tpl_${Date.now()}`,
+        name: currentTpl.category,
+        type: "template",
+        sort_order: 0
+      };
+      updatedCategories.push(newCat);
+      
+      try {
+        await fetchWithAuth(`${API_BASE_URL}/api/admin/update/categories`, {
+          method: "POST",
+          body: JSON.stringify({ data: updatedCategories, admin })
+        });
+        setAllCategories(updatedCategories);
+      } catch (err) {
+        console.error("Failed to save new category:", err);
+      }
+    }
 
     const cleanedTpl = {
       ...currentTpl,
       updated_at: now
     };
 
+    let updatedTemplates = [...templates];
     if (cleanedTpl.id) {
       updatedTemplates = updatedTemplates.map(t => t.id === cleanedTpl.id ? cleanedTpl as EmailTemplate : t);
     } else {
@@ -141,6 +175,8 @@ export default function AdminTemplatesPage() {
         setTemplates(updatedTemplates);
         setIsEditing(false);
         setCurrentTpl(null);
+        setIsAddingNewCategory(false);
+        setNewCategoryName("");
         toast.success("模板儲存成功");
       }
     } catch {
@@ -233,15 +269,14 @@ export default function AdminTemplatesPage() {
             ))
           ) : filteredTemplates.map((tpl) => (
             <Card key={tpl.id} className={cn(
-              "p-5 border-slate-100 hover:border-primary/20 transition-all",
+              "p-5 border-slate-100 hover:border-primary/20 transition-all h-40 flex flex-col",
               tpl.status === "disabled" && "opacity-60 bg-slate-50/50"
             )}>
-              <div className="flex justify-between items-start mb-4">
-                <div className="space-y-1">
-                  <Badge variant="secondary" className="text-[10px] font-bold uppercase">{tpl.category}</Badge>
-                  <h3 className="text-lg font-black text-slate-900">{tpl.title}</h3>
+              <div className="flex justify-between items-start mb-2 shrink-0">
+                <div className="space-y-1 min-w-0">
+                  <Badge variant="secondary" className="text-[10px] font-bold uppercase shrink-0">{tpl.category}</Badge>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1 shrink-0">
                   <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-primary" onClick={() => {
                     setCurrentTpl(tpl);
                     setActiveStep("basic");
@@ -254,7 +289,17 @@ export default function AdminTemplatesPage() {
                   </Button>
                 </div>
               </div>
-              <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50 text-[10px] font-bold text-slate-400">
+              
+              <ScrollArea className="flex-1 pr-4 mb-2">
+                <h3 className="text-lg font-black text-slate-900 leading-tight">{tpl.title}</h3>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {tpl.tags.map(tag => (
+                    <span key={tag} className="text-[10px] text-slate-400">#{tag}</span>
+                  ))}
+                </div>
+              </ScrollArea>
+
+              <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-50 text-[10px] font-bold text-slate-400 shrink-0">
                 <span>{tpl.variants.length} 個情境版本</span>
                 <span>更新於 {tpl.updated_at}</span>
               </div>
@@ -312,22 +357,46 @@ export default function AdminTemplatesPage() {
                         onChange={e => setCurrentTpl({...currentTpl, title: e.target.value})}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">分類</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {CATEGORIES.map(cat => (
-                          <button
-                            key={cat}
-                            onClick={() => setCurrentTpl({...currentTpl, category: cat})}
-                            className={cn(
-                              "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all",
-                              currentTpl.category === cat ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:border-primary/50"
-                            )}
-                          >
-                            {cat}
-                          </button>
-                        ))}
-                      </div>
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex justify-between">
+                        分類
+                        {isAddingNewCategory ? (
+                          <button onClick={() => setIsAddingNewCategory(false)} className="text-primary hover:underline font-bold">選擇現有</button>
+                        ) : (
+                          <button onClick={() => {
+                            setIsAddingNewCategory(true);
+                            setNewCategoryName("");
+                          }} className="text-primary hover:underline font-bold">+ 新增分類</button>
+                        )}
+                      </Label>
+                      
+                      {isAddingNewCategory ? (
+                        <Input 
+                          placeholder="輸入新分類名稱..."
+                          value={newCategoryName}
+                          onChange={(e) => {
+                            setNewCategoryName(e.target.value);
+                            setCurrentTpl(prev => ({ ...prev!, category: e.target.value }));
+                          }}
+                          className="h-11 rounded-xl border-primary/30 focus:border-primary font-bold"
+                          autoFocus
+                        />
+                      ) : (
+                        <div className="flex flex-wrap gap-2 p-3 rounded-xl border border-slate-100 bg-slate-50/50">
+                          {displayCategories.map(cat => (
+                            <button
+                              key={cat}
+                              onClick={() => setCurrentTpl({...currentTpl!, category: cat})}
+                              className={cn(
+                                "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all",
+                                currentTpl?.category === cat ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:border-primary/50"
+                              )}
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 

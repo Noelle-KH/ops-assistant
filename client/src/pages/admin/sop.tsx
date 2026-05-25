@@ -50,43 +50,53 @@ interface SOPItem {
   linked_template?: string[];
   updated_at: string;
   status: "active" | "disabled";
+  sort_order?: number;
 }
 
-const CATEGORIES = ["帳戶管理", "開戶", "入金", "出金", "交易", "代理", "合規", "其他"];
 export default function AdminSopPage() {
   const [sops, setSops] = useState<SOPItem[]>([]);
+  const [allCategories, setAllCategories] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentSop, setCurrentSop] = useState<Partial<SOPItem> | null>(null);
   const [activeStep, setActiveStep] = useState<"basic" | "steps" | "exceptions">("basic");
+  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
-  const fetchSops = async () => {
+  // Filter categories for SOP display
+  const sopCategories = allCategories.filter(c => c.type === "sop");
+  const displayCategories = sopCategories.length > 0 ? sopCategories.map(c => c.name) : ["一般"];
+
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/api/sop`);
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setSops(data);
-      } else {
-        setSops([]);
-      }
+      const [sopRes, catRes] = await Promise.all([
+        fetchWithAuth(`${API_BASE_URL}/api/sop`),
+        fetchWithAuth(`${API_BASE_URL}/api/categories`)
+      ]);
+      
+      const sopData = await sopRes.json();
+      const catData = await catRes.json();
+      
+      if (Array.isArray(sopData)) setSops(sopData);
+      if (Array.isArray(catData)) setAllCategories(catData);
     } catch (_err) {
-      toast.error("無法載入 SOP 資料");
+      toast.error("無法載入資料");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    void fetchSops();
+    void fetchData();
   }, []);
 
   const initNewSop = () => {
     setCurrentSop({
       title: "",
-      category: "帳戶管理",
+      category: displayCategories[0] || "帳戶管理",
       tags: [],
       rule: { description: "", conditions: [""], restrictions: [""] },
       operation: { steps: [{ step: 1, action: "", path: "" }] },
@@ -107,10 +117,33 @@ export default function AdminSopPage() {
 
     setIsSaving(true);
     const admin = localStorage.getItem("user_name") || "Admin";
-    let updatedSops = [...sops];
     const now = new Date().toISOString().split('T')[0];
 
-    // Clean up empty steps/conditions/exceptions
+    // 1. Handle Categories Update if new one added
+    let updatedCategories = [...allCategories];
+    const categoryExists = allCategories.some(c => c.name === currentSop.category && c.type === "sop");
+    
+    if (!categoryExists) {
+      const newCat = {
+        id: `cat_sop_${Date.now()}`,
+        name: currentSop.category,
+        type: "sop",
+        sort_order: 0
+      };
+      updatedCategories.push(newCat);
+      
+      try {
+        await fetchWithAuth(`${API_BASE_URL}/api/admin/update/categories`, {
+          method: "POST",
+          body: JSON.stringify({ data: updatedCategories, admin })
+        });
+        setAllCategories(updatedCategories);
+      } catch (err) {
+        console.error("Failed to save new category:", err);
+      }
+    }
+
+    // 2. Clean up empty steps/conditions/exceptions
     const cleanedSop = {
       ...currentSop,
       rule: {
@@ -127,6 +160,7 @@ export default function AdminSopPage() {
       updated_at: now
     };
 
+    let updatedSops = [...sops];
     if (cleanedSop.id) {
       updatedSops = updatedSops.map(s => s.id === cleanedSop.id ? cleanedSop as SOPItem : s);
     } else {
@@ -144,6 +178,8 @@ export default function AdminSopPage() {
         setSops(updatedSops);
         setIsEditing(false);
         setCurrentSop(null);
+        setIsAddingNewCategory(false);
+        setNewCategoryName("");
         toast.success("SOP 儲存成功");
       }
     } catch (err) {
@@ -220,22 +256,21 @@ export default function AdminSopPage() {
         <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-32 bg-slate-50 animate-pulse rounded-2xl" />
+              <div key={i} className="h-40 bg-slate-50 animate-pulse rounded-2xl" />
             ))
           ) : filteredSops.map((sop) => (
             <Card key={sop.id} className={cn(
-              "p-5 border-slate-100 hover:border-primary/20 transition-all",
+              "p-5 border-slate-100 hover:border-primary/20 transition-all h-48 flex flex-col",
               sop.status === "disabled" && "opacity-60 bg-slate-50/50"
             )}>
-              <div className="flex justify-between items-start mb-4">
-                <div className="space-y-1">
+              <div className="flex justify-between items-start mb-2 shrink-0">
+                <div className="space-y-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-[10px] font-bold uppercase">{sop.category}</Badge>
-                    <code className="text-[9px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">ID: {sop.id}</code>
+                    <Badge variant="secondary" className="text-[10px] font-bold uppercase shrink-0">{sop.category}</Badge>
+                    <code className="text-[9px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 truncate">ID: {sop.id}</code>
                   </div>
-                  <h3 className="text-lg font-black text-slate-900">{sop.title}</h3>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1 shrink-0">
                   <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-primary" onClick={() => {
                     setCurrentSop(sop);
                     setActiveStep("basic");
@@ -248,7 +283,13 @@ export default function AdminSopPage() {
                   </Button>
                 </div>
               </div>
-              <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50 text-[10px] font-bold text-slate-400">
+              
+              <ScrollArea className="flex-1 pr-4 mb-2">
+                <h3 className="text-lg font-black text-slate-900 leading-tight">{sop.title}</h3>
+                <p className="text-xs text-slate-500 mt-2 line-clamp-2">{sop.rule.description}</p>
+              </ScrollArea>
+
+              <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-50 text-[10px] font-bold text-slate-400 shrink-0">
                 <span>{sop.operation.steps.length} 個步驟</span>
                 <span>更新於 {sop.updated_at}</span>
               </div>
@@ -307,22 +348,46 @@ export default function AdminSopPage() {
                         onChange={e => setCurrentSop({...currentSop, title: e.target.value})}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">分類</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {CATEGORIES.map(cat => (
-                          <button
-                            key={cat}
-                            onClick={() => setCurrentSop({...currentSop, category: cat})}
-                            className={cn(
-                              "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all",
-                              currentSop.category === cat ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:border-primary/50"
-                            )}
-                          >
-                            {cat}
-                          </button>
-                        ))}
-                      </div>
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex justify-between">
+                        分類
+                        {isAddingNewCategory ? (
+                          <button onClick={() => setIsAddingNewCategory(false)} className="text-primary hover:underline font-bold">選擇現有</button>
+                        ) : (
+                          <button onClick={() => {
+                            setIsAddingNewCategory(true);
+                            setNewCategoryName("");
+                          }} className="text-primary hover:underline font-bold">+ 新增分類</button>
+                        )}
+                      </Label>
+                      
+                      {isAddingNewCategory ? (
+                        <Input 
+                          placeholder="輸入新分類名稱..."
+                          value={newCategoryName}
+                          onChange={(e) => {
+                            setNewCategoryName(e.target.value);
+                            setCurrentSop(prev => ({ ...prev!, category: e.target.value }));
+                          }}
+                          className="h-11 rounded-xl border-primary/30 focus:border-primary font-bold"
+                          autoFocus
+                        />
+                      ) : (
+                        <div className="flex flex-wrap gap-2 p-3 rounded-xl border border-slate-100 bg-slate-50/50">
+                          {displayCategories.map(cat => (
+                            <button
+                              key={cat}
+                              onClick={() => setCurrentSop({...currentSop!, category: cat})}
+                              className={cn(
+                                "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all",
+                                currentSop?.category === cat ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:border-primary/50"
+                              )}
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 

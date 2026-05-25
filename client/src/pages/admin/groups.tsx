@@ -39,6 +39,7 @@ const DIVISIONS = ["運營", "金流", "產品", "機器人", "其他"];
 
 export default function AdminGroupsPage() {
   const [groups, setGroups] = useState<GroupItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -46,26 +47,37 @@ export default function AdminGroupsPage() {
   const [currentGroup, setCurrentGroup] = useState<Partial<GroupItem> | null>(null);
   const [useCaseInput, setUseCaseInput] = useState("");
   const [contactInput, setContactInput] = useState("");
+  const [isAddingNewDivision, setIsAddingNewDivision] = useState(false);
+  const [newDivisionName, setNewDivisionName] = useState("");
 
-  const fetchGroups = async () => {
+  // Get unique divisions from existing Groups
+  const existingDivisions = Array.from(new Set(groups.map(g => g.division))).filter(Boolean);
+  const displayDivisions = existingDivisions.length > 0 ? existingDivisions : ["一般"];
+
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/api/groups`);
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setGroups(data);
-      } else {
-        setGroups([]);
+      const [groupRes, catRes] = await Promise.all([
+        fetchWithAuth(`${API_BASE_URL}/api/groups`),
+        fetchWithAuth(`${API_BASE_URL}/api/categories`)
+      ]);
+      
+      const groupData = await groupRes.json();
+      const catData = await catRes.json();
+      
+      if (Array.isArray(groupData)) setGroups(groupData);
+      if (Array.isArray(catData)) {
+        setCategories(catData.filter((c: Category) => c.type === "group"));
       }
     } catch (_err) {
-      toast.error("無法載入群組資料");
+      toast.error("無法載入資料");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    void fetchGroups();
+    void fetchData();
   }, []);
 
   const handleSave = async () => {

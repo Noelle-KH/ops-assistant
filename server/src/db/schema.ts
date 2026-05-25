@@ -13,6 +13,7 @@ export const faqs = sqliteTable("faqs", {
   linked_template: text("linked_template"),
   updated_at: text("updated_at").notNull(),
   status: text("status").notNull().default("active"),
+  sort_order: integer("sort_order").notNull().default(0),
 });
 
 export const sops = sqliteTable("sops", {
@@ -36,6 +37,7 @@ export const sops = sqliteTable("sops", {
   linked_template: text("linked_template", { mode: "json" }).$type<string[]>().notNull(),
   updated_at: text("updated_at").notNull(),
   status: text("status").notNull().default("active"),
+  sort_order: integer("sort_order").notNull().default(0),
 });
 
 export const templates = sqliteTable("templates", {
@@ -54,6 +56,7 @@ export const templates = sqliteTable("templates", {
   linked_sop: text("linked_sop"),
   updated_at: text("updated_at").notNull(),
   status: text("status").notNull().default("active"),
+  sort_order: integer("sort_order").notNull().default(0),
 });
 
 export const announcements = sqliteTable("announcements", {
@@ -64,6 +67,14 @@ export const announcements = sqliteTable("announcements", {
   priority: text("priority").notNull(), // low, normal, high, urgent
   date: text("date").notNull(),
   status: text("status").notNull().default("active"),
+});
+
+export const categories = sqliteTable("categories", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // faq, sop, template, tool, group
+  sort_order: integer("sort_order").notNull().default(0),
+  color: text("color"),
 });
 
 export const groups = sqliteTable("groups", {

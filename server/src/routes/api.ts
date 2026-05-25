@@ -1,14 +1,25 @@
 import express from 'express';
 import { db } from '../db';
-import { faqs, sops, templates, groups, tools, announcements } from '../db/schema';
+import { faqs, sops, templates, groups, tools, announcements, categories } from '../db/schema';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { asc, desc } from 'drizzle-orm';
 
 const router = express.Router();
+
+router.get('/categories', async (req, res) => {
+  try {
+    const data = await db.select().from(categories).orderBy(asc(categories.sort_order));
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
 
 router.get('/faq', async (req, res) => {
   try {
     console.log('[API] Fetching FAQs...');
-    const data = await db.select().from(faqs);
+    const data = await db.select().from(faqs).orderBy(asc(faqs.sort_order), desc(faqs.updated_at));
     console.log(`[API] Successfully fetched ${data.length} FAQs`);
     res.json(data);
   } catch (error: any) {
@@ -26,7 +37,7 @@ router.get('/faq', async (req, res) => {
 
 router.get('/sop', async (req, res) => {
   try {
-    const data = await db.select().from(sops);
+    const data = await db.select().from(sops).orderBy(asc(sops.sort_order), desc(sops.updated_at));
     res.json(data);
   } catch (error) {
     console.error('Error fetching SOPs:', error);
@@ -36,7 +47,7 @@ router.get('/sop', async (req, res) => {
 
 router.get('/templates', async (req, res) => {
   try {
-    const data = await db.select().from(templates);
+    const data = await db.select().from(templates).orderBy(asc(templates.sort_order), desc(templates.updated_at));
     res.json(data);
   } catch (error) {
     console.error('Error fetching templates:', error);

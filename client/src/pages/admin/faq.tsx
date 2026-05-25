@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Search, 
   Plus, 
@@ -39,38 +40,54 @@ interface FAQItem {
   answer_en?: string;
   linked_sop?: string;
   linked_template?: string;
+  sort_order?: number;
 }
 
-const CATEGORIES = ["開戶", "交易帳戶", "入金", "出金", "交易", "代理", "活動", "其他"];
+interface Category {
+  id: string;
+  name: string;
+  type: string;
+}
 
 export default function AdminFaqPage() {
+  const navigate = useNavigate();
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentFaq, setCurrentFaq] = useState<Partial<FAQItem> | null>(null);
   const [tagInput, setTagInput] = useState("");
+  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
-  const fetchFaqs = async () => {
+  // Filter categories for FAQ display
+  const faqCategories = allCategories.filter(c => c.type === "faq");
+  const displayCategories = faqCategories.length > 0 ? faqCategories.map(c => c.name) : ["一般"];
+
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/api/faq`);
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setFaqs(data);
-      } else {
-        setFaqs([]);
-      }
+      const [faqRes, catRes] = await Promise.all([
+        fetchWithAuth(`${API_BASE_URL}/api/faq`),
+        fetchWithAuth(`${API_BASE_URL}/api/categories`)
+      ]);
+      
+      const faqData = await faqRes.json();
+      const catData = await catRes.json();
+      
+      if (Array.isArray(faqData)) setFaqs(faqData);
+      if (Array.isArray(catData)) setAllCategories(catData);
     } catch (_err) {
-      toast.error("無法載入 FAQ 資料");
+      toast.error("無法載入資料");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    void fetchFaqs();
+    void fetchData();
   }, []);
 
   const handleSave = async () => {
@@ -80,15 +97,40 @@ export default function AdminFaqPage() {
     }
 
     setIsSaving(true);
-    // Process tags: support both English (,) and Chinese (，) commas
+    const admin = localStorage.getItem("user_name") || "Admin";
+    const now = new Date().toISOString().split('T')[0];
+
+    // 1. Handle Categories Update if new one added
+    let updatedCategories = [...allCategories];
+    const categoryExists = allCategories.some(c => c.name === currentFaq.category && c.type === "faq");
+    
+    if (!categoryExists) {
+      const newCat: Category = {
+        id: `cat_faq_${Date.now()}`,
+        name: currentFaq.category,
+        type: "faq"
+      };
+      updatedCategories.push(newCat);
+      
+      try {
+        await fetchWithAuth(`${API_BASE_URL}/api/admin/update/categories`, {
+          method: "POST",
+          body: JSON.stringify({ data: updatedCategories, admin })
+        });
+        setAllCategories(updatedCategories);
+      } catch (err) {
+        console.error("Failed to save new category:", err);
+        // Continue saving FAQ anyway, but category list won't be updated
+      }
+    }
+
+    // 2. Process tags
     const processedTags = tagInput
       .split(/[，,]/)
       .map(t => t.trim())
       .filter(Boolean);
 
-    const admin = localStorage.getItem("user_name") || "Admin";
     let updatedFaqs = [...faqs];
-    const now = new Date().toISOString().split('T')[0];
 
     if (currentFaq.id) {
       // Update
@@ -118,6 +160,8 @@ export default function AdminFaqPage() {
         setIsEditing(false);
         setCurrentFaq(null);
         setTagInput("");
+        setIsAddingNewCategory(false);
+        setNewCategoryName("");
         toast.success(currentFaq.id ? "FAQ 已更新" : "FAQ 已建立");
       } else {
         throw new Error();
@@ -187,17 +231,17 @@ export default function AdminFaqPage() {
         <div className="p-4 space-y-3">
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-20 bg-slate-50 animate-pulse rounded-xl" />
+              <div key={i} className="h-32 bg-slate-50 animate-pulse rounded-xl" />
             ))
           ) : filteredFaqs.length > 0 ? (
             filteredFaqs.map((faq) => (
               <Card key={faq.id} className={cn(
-                "p-4 border-slate-100 hover:border-primary/20 transition-all group",
+                "p-4 border-slate-100 hover:border-primary/20 transition-all group h-32 flex flex-col",
                 faq.status === "disabled" && "opacity-60 bg-slate-50/50"
               )}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-2">
+                <div className="flex items-start justify-between gap-4 h-full">
+                  <div className="space-y-1 flex-1 min-w-0 h-full flex flex-col">
+                    <div className="flex items-center gap-2 shrink-0">
                       <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider">
                         {faq.category}
                       </Badge>
@@ -208,15 +252,17 @@ export default function AdminFaqPage() {
                       )}
                       <span className="text-[10px] text-slate-400 font-medium">ID: {faq.id}</span>
                     </div>
-                    <h3 className="font-bold text-slate-900 leading-tight">{faq.question}</h3>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {faq.tags.map(tag => (
-                        <span key={tag} className="text-[10px] text-slate-400">#{tag}</span>
-                      ))}
-                    </div>
+                    <ScrollArea className="flex-1 pr-4">
+                      <h3 className="font-bold text-slate-900 leading-tight mt-1">{faq.question}</h3>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {faq.tags.map(tag => (
+                          <span key={tag} className="text-[10px] text-slate-400">#{tag}</span>
+                        ))}
+                      </div>
+                    </ScrollArea>
                   </div>
                   
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0 self-start">
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -267,25 +313,50 @@ export default function AdminFaqPage() {
           
           <div className="space-y-6 py-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">分類</Label>
-                <div className="flex flex-wrap gap-2">
-                  {CATEGORIES.map(cat => (
-                    <button
-                      key={cat}
-                      onClick={() => setCurrentFaq(prev => ({ ...prev!, category: cat }))}
-                      className={cn(
-                        "px-3 py-1 rounded-full text-xs font-bold border transition-all",
-                        currentFaq?.category === cat 
-                          ? "bg-primary text-white border-primary shadow-sm shadow-primary/20" 
-                          : "bg-white text-slate-500 border-slate-200 hover:border-primary/50"
-                      )}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex justify-between">
+                  分類
+                  {isAddingNewCategory ? (
+                    <button onClick={() => setIsAddingNewCategory(false)} className="text-primary hover:underline">選擇現有</button>
+                  ) : (
+                    <button onClick={() => {
+                      setIsAddingNewCategory(true);
+                      setNewCategoryName("");
+                    }} className="text-primary hover:underline">+ 新增分類</button>
+                  )}
+                </Label>
+
+                {isAddingNewCategory ? (
+                  <Input 
+                    placeholder="輸入新分類名稱..."
+                    value={newCategoryName}
+                    onChange={(e) => {
+                      setNewCategoryName(e.target.value);
+                      setCurrentFaq(prev => ({ ...prev!, category: e.target.value }));
+                    }}
+                    className="rounded-xl border-primary/30 focus:border-primary"
+                    autoFocus
+                  />
+                ) : (
+                  <div className="flex flex-wrap gap-2 p-3 rounded-xl border border-slate-100 bg-slate-50/50">
+                    {displayCategories.map(cat => (
+                      <button
+                        key={cat}
+                        onClick={() => setCurrentFaq(prev => ({ ...prev!, category: cat }))}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all",
+                          currentFaq?.category === cat 
+                            ? "bg-primary text-white border-primary shadow-sm shadow-primary/20" 
+                            : "bg-white text-slate-500 border-slate-200 hover:border-primary/50"
+                        )}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">標籤 (以逗號分隔)</Label>
                 <Input 

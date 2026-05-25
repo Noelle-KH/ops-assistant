@@ -9,7 +9,8 @@ import {
   groups, 
   tools, 
   users, 
-  auditLogs 
+  auditLogs,
+  categories
 } from '../db/schema';
 import { sql } from 'drizzle-orm';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
@@ -47,7 +48,8 @@ router.post('/update/:type', async (req, res) => {
     announcements: announcements,
     groups: groups,
     tools: tools,
-    users: users
+    users: users,
+    categories: categories
   };
 
   const table = tableMap[type];
