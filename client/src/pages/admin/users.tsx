@@ -10,7 +10,9 @@ import {
   Key,
   ShieldCheck,
   Zap,
-  User
+  User,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,21 +46,21 @@ const ROLES = [
   { 
     value: "admin", 
     label: "系統管理員", 
-    description: "最高權限", 
+    description: "最高權限，可管理帳號與稽核", 
     color: "bg-rose-600", 
     icon: ShieldAlert 
   },
   { 
     value: "high-level", 
     label: "高級運營", 
-    description: "敏感資訊存取", 
+    description: "可存取敏感資訊與編輯內容", 
     color: "bg-amber-500", 
     icon: Zap 
   },
   { 
     value: "operator", 
     label: "一般運營", 
-    description: "基礎功能查詢", 
+    description: "基礎功能查詢與導覽使用", 
     color: "bg-blue-500", 
     icon: User 
   },
@@ -71,7 +73,9 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [currentUser, setCurrentUser] = useState<Partial<UserItem> | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserItem | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -101,9 +105,7 @@ export default function AdminUsersPage() {
     }
 
     setIsSaving(true);
-    // ...
-
-    const admin = localStorage.getItem("user_name") || "Admin";
+    const admin = sessionStorage.getItem("user_name") || "Admin";
     let updatedUsers = [...users];
     const now = new Date().toISOString();
 
@@ -124,7 +126,7 @@ export default function AdminUsersPage() {
         status: "active",
         lastLogin: "Never",
         createdAt: now.split('T')[0],
-        password: currentUser.password || "Admin123456"
+        password: currentUser.password || "OpsNavigator@2026"
       };
       updatedUsers.unshift(newUser);
     }
@@ -143,11 +145,39 @@ export default function AdminUsersPage() {
       }
     } catch {
       toast.error("儲存失敗");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!userToDelete) return;
+    
+    setIsSaving(true);
+    const admin = sessionStorage.getItem("user_name") || "Admin";
+    const updatedUsers = users.filter(u => u.id !== userToDelete.id);
+
+    try {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/users`, {
+        method: "POST",
+        body: JSON.stringify({ data: updatedUsers, admin })
+      });
+
+      if (res.ok) {
+        setUsers(updatedUsers);
+        setIsDeleting(false);
+        setUserToDelete(null);
+        toast.success("帳號已永久刪除");
+      }
+    } catch {
+      toast.error("刪除失敗");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const toggleStatus = async (id: string) => {
-    const admin = localStorage.getItem("user_name") || "Admin";
+    const admin = sessionStorage.getItem("user_name") || "Admin";
     const updated = users.map(u => {
       if (u.id === id) {
         return { ...u, status: (u.status === "active" ? "disabled" : "active") as "active" | "disabled" };
@@ -181,7 +211,7 @@ export default function AdminUsersPage() {
           <Search className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
           <Input
             placeholder="搜尋使用者名稱或姓名..."
-            className="pl-10 h-11 rounded-xl"
+            className="pl-10 h-11 rounded-xl shadow-sm border-slate-200"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -203,7 +233,7 @@ export default function AdminUsersPage() {
           ) : filteredUsers.length > 0 ? (
             filteredUsers.map((user) => (
               <Card key={user.id} className={cn(
-                "border-slate-100 hover:border-primary/20 transition-all overflow-hidden",
+                "border-slate-100 hover:border-primary/20 transition-all overflow-hidden group",
                 user.status === "disabled" && "opacity-60 bg-slate-50/50"
               )}>
                 <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -231,7 +261,7 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 self-end sm:self-center">
+                  <div className="flex items-center gap-1 self-end sm:self-center">
                     <Button size="icon" variant="ghost" className="h-9 w-9 text-slate-400 hover:text-primary" onClick={() => {
                       setCurrentUser(user);
                       setIsEditing(true);
@@ -241,8 +271,14 @@ export default function AdminUsersPage() {
                     <Button size="icon" variant="ghost" className={cn(
                       "h-9 w-9 transition-colors",
                       user.status === "active" ? "text-slate-400 hover:text-amber-500" : "text-amber-500 hover:text-emerald-500"
-                    )} onClick={() => toggleStatus(user.id)}>
+                    )} onClick={() => toggleStatus(user.id)} title={user.status === "active" ? "停用帳號" : "啟用帳號"}>
                       {user.status === "active" ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-9 w-9 text-slate-300 hover:text-rose-500 transition-colors" onClick={() => {
+                      setUserToDelete(user);
+                      setIsDeleting(true);
+                    }} title="永久刪除">
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardContent>
@@ -258,6 +294,7 @@ export default function AdminUsersPage() {
         </div>
       </ScrollArea>
 
+      {/* Edit/Create Dialog */}
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
         <DialogContent className="max-w-md rounded-2xl border-none shadow-2xl">
           <DialogHeader className="pb-4">
@@ -297,13 +334,13 @@ export default function AdminUsersPage() {
 
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest px-1">
-                {currentUser?.id ? "重設密碼 (若不修改請留空)" : "初始密碼 (預設 Admin123456)"}
+                {currentUser?.id ? "重設密碼 (若不修改請留空)" : "初始密碼 (預設 OpsNavigator@2026)"}
               </Label>
               <div className="relative">
                 <Input
                   type="password"
                   autoComplete="new-password"
-                  placeholder={currentUser?.id ? "輸入新密碼..." : "Admin123456"}
+                  placeholder={currentUser?.id ? "輸入新密碼..." : "OpsNavigator@2026"}
                   className="h-11 rounded-xl font-bold pl-10"
                   value={currentUser?.password || ""}
                   onChange={e => setCurrentUser({...currentUser!, password: e.target.value})}
@@ -359,6 +396,28 @@ export default function AdminUsersPage() {
             </Button>
             <Button onClick={handleSave} disabled={isSaving} className="rounded-xl font-bold h-11 px-8 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
               {isSaving ? "處理中..." : "儲存帳號設定"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleting} onOpenChange={setIsDeleting}>
+        <DialogContent className="max-w-md p-8 rounded-3xl border-none shadow-2xl">
+          <DialogHeader className="space-y-4">
+            <div className="h-12 w-12 rounded-2xl bg-rose-50 flex items-center justify-center mx-auto border border-rose-100">
+              <AlertTriangle className="h-6 w-6 text-rose-500" />
+            </div>
+            <DialogTitle className="text-2xl font-black text-slate-900 text-center">確定要刪除帳號？</DialogTitle>
+            <DialogDescription className="text-center text-slate-500 font-medium leading-relaxed">
+              您正在嘗試刪除 <span className="font-bold text-slate-900">@{userToDelete?.username}</span> ({userToDelete?.displayName})。<br />
+              此操作將會永久移除該使用者及其存取權限，且<span className="text-rose-600 font-bold">無法復原</span>。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-3 mt-6">
+            <Button variant="outline" className="flex-1 rounded-xl h-11 font-bold border-slate-200" onClick={() => setIsDeleting(false)}>取消返回</Button>
+            <Button className="flex-1 rounded-xl h-11 font-bold bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-100" onClick={handleDelete} disabled={isSaving}>
+              {isSaving ? "執行中..." : "確定永久刪除"}
             </Button>
           </DialogFooter>
         </DialogContent>

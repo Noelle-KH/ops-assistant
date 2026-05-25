@@ -31,10 +31,10 @@ export default function AdminLoginPage() {
           setLoading(false);
           return;
         }
-        localStorage.setItem("user_token", result.token);
-        localStorage.setItem("user_name", result.user.displayName || result.user.username);
-        localStorage.setItem("user_role", result.user.role);
-        localStorage.setItem("last_activity", Date.now().toString());
+        sessionStorage.setItem("user_token", result.token);
+        sessionStorage.setItem("user_name", result.user.displayName || result.user.username);
+        sessionStorage.setItem("user_role", result.user.role);
+        sessionStorage.setItem("last_activity", Date.now().toString());
         toast.success(`管理員登入成功，歡迎 ${result.user.displayName || result.user.username}`);
         navigate("/admin/dashboard");
       } else {

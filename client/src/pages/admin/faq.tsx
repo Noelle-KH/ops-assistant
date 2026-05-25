@@ -97,7 +97,7 @@ export default function AdminFaqPage() {
     }
 
     setIsSaving(true);
-    const admin = localStorage.getItem("user_name") || "Admin";
+    const admin = sessionStorage.getItem("user_name") || "Admin";
     const now = new Date().toISOString().split('T')[0];
 
     // 1. Handle Categories Update if new one added

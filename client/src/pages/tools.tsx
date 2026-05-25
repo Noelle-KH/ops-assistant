@@ -31,8 +31,8 @@ export default function ToolsPage() {
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Get user role from local storage or default to operator
-  const userRole = localStorage.getItem("user_role") || "operator"; 
+  // Get user role from session storage or default to operator
+  const userRole = sessionStorage.getItem("user_role") || "operator"; 
   const canSeeSensitive = userRole === "admin" || userRole === "high_level";
 
   useEffect(() => {

@@ -99,7 +99,7 @@ export default function AdminAnnouncementsPage() {
     }
 
     setIsSaving(true);
-    const admin = localStorage.getItem("admin_user") || "Admin"
+    const admin = sessionStorage.getItem("admin_user") || "Admin"
     let updatedList = [...announcements]
     const today = new Date().toISOString().split('T')[0]
 
@@ -142,7 +142,7 @@ export default function AdminAnnouncementsPage() {
   }
 
   const toggleStatus = async (id: string) => {
-    const admin = localStorage.getItem("admin_user") || "Admin"
+    const admin = sessionStorage.getItem("admin_user") || "Admin"
     const updatedList = announcements.map(a => {
       if (a.id === id) {
         return { ...a, status: a.status === "active" ? "disabled" : "active" as "active" | "disabled" }

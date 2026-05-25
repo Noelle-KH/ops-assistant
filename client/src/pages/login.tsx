@@ -16,7 +16,7 @@ export default function LoginPage() {
 
   // If already logged in, redirect away from login page
   useEffect(() => {
-    const token = localStorage.getItem("user_token");
+    const token = sessionStorage.getItem("user_token");
     if (token) {
       navigate("/");
     }
@@ -35,15 +35,15 @@ export default function LoginPage() {
       const result = await res.json();
 
       if (res.ok) {
-        localStorage.setItem("user_token", result.token);
-        localStorage.setItem("user_name", result.user.displayName || result.user.username);
-        localStorage.setItem("user_role", result.user.role);
-        localStorage.setItem("last_activity", Date.now().toString());
+        sessionStorage.setItem("user_token", result.token);
+        sessionStorage.setItem("user_name", result.user.displayName || result.user.username);
+        sessionStorage.setItem("user_role", result.user.role);
+        sessionStorage.setItem("last_activity", Date.now().toString());
         
         // Also set admin info if they are admin, to keep compatibility with existing admin pages
         if (result.user.role === "admin") {
-          localStorage.setItem("admin_token", result.token);
-          localStorage.setItem("admin_user", result.user.displayName || result.user.username);
+          sessionStorage.setItem("admin_token", result.token);
+          sessionStorage.setItem("admin_user", result.user.displayName || result.user.username);
         }
 
         toast.success(`登入成功，歡迎 ${result.user.displayName || result.user.username}`);

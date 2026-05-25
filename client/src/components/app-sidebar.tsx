@@ -45,8 +45,8 @@ export function AppSidebar() {
   const [searchOpen, setSearchOpen] = useState(false)
   const isCollapsed = state === "collapsed"
   
-  const userName = localStorage.getItem("user_name") || "未登入"
-  const userRole = localStorage.getItem("user_role") || "operator"
+  const userName = sessionStorage.getItem("user_name") || "未登入"
+  const userRole = sessionStorage.getItem("user_role") || "operator"
   const isAdmin = userRole === "admin"
 
   useEffect(() => {
@@ -61,12 +61,12 @@ export function AppSidebar() {
   }, [])
 
   const handleLogout = () => {
-    localStorage.removeItem("user_token")
-    localStorage.removeItem("user_name")
-    localStorage.removeItem("user_role")
-    localStorage.removeItem("admin_token")
-    localStorage.removeItem("admin_user")
-    localStorage.removeItem("last_activity")
+    sessionStorage.removeItem("user_token")
+    sessionStorage.removeItem("user_name")
+    sessionStorage.removeItem("user_role")
+    sessionStorage.removeItem("admin_token")
+    sessionStorage.removeItem("admin_user")
+    sessionStorage.removeItem("last_activity")
     toast.success("已成功登出系統")
     navigate("/login")
   }
@@ -74,7 +74,7 @@ export function AppSidebar() {
   const getRoleLabel = (role: string) => {
     switch(role) {
       case "admin": return "系統管理員"
-      case "high_level": return "高級運營"
+      case "high-level": return "高級運營"
       default: return "一般運營"
     }
   }

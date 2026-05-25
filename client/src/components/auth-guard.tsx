@@ -10,9 +10,9 @@ interface AuthGuardProps {
 const TIMEOUT_DURATION = 60 * 60 * 1000; // 60 minutes in milliseconds
 
 export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
-  const token = localStorage.getItem("user_token");
-  const role = localStorage.getItem("user_role");
-  const lastActivity = localStorage.getItem("last_activity");
+  const token = sessionStorage.getItem("user_token");
+  const role = sessionStorage.getItem("user_role");
+  const lastActivity = sessionStorage.getItem("last_activity");
   const location = useLocation();
   const [isExpired, setIsExpired] = useState(false);
 
@@ -24,10 +24,10 @@ export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
       const lastAction = parseInt(lastActivity || "0", 10);
 
       if (lastAction && now - lastAction > TIMEOUT_DURATION) {
-        localStorage.removeItem("user_token");
-        localStorage.removeItem("user_role");
-        localStorage.removeItem("user_name");
-        localStorage.removeItem("last_activity");
+        sessionStorage.removeItem("user_token");
+        sessionStorage.removeItem("user_role");
+        sessionStorage.removeItem("user_name");
+        sessionStorage.removeItem("last_activity");
         setIsExpired(true);
         toast.error("Session 已過期，請重新登入");
       }
@@ -38,7 +38,7 @@ export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
 
     // Update last activity on any user interaction
     const updateActivity = () => {
-      localStorage.setItem("last_activity", Date.now().toString());
+      sessionStorage.setItem("last_activity", Date.now().toString());
     };
 
     const events = ["mousedown", "keydown", "scroll", "touchstart"];

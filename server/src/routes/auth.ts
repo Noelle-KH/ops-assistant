@@ -39,7 +39,7 @@ router.post('/login', async (req, res) => {
         name: user.displayName 
       }, 
       JWT_SECRET, 
-      { expiresIn: '24h' }
+      { expiresIn: '8h' }
     );
 
     res.json({
@@ -47,9 +47,14 @@ router.post('/login', async (req, res) => {
       token,
       user: userWithoutPassword
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
-    res.status(500).json({ error: '伺服器內部錯誤' });
+    if (error.cause) console.error('Login error cause:', error.cause);
+    res.status(500).json({ 
+      error: '伺服器內部錯誤',
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
