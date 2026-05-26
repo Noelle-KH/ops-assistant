@@ -67,7 +67,7 @@ function App() {
 
           {/* Admin Routes */}
           <Route path="/admin" element={
-            <AuthGuard requireAdmin>
+            <AuthGuard allowedRoles={["admin", "high-level"]}>
               <AdminLayout />
             </AuthGuard>
           }>
@@ -78,7 +78,11 @@ function App() {
             <Route path="templates" element={<AdminTemplatesPage />} />
             <Route path="groups" element={<AdminGroupsPage />} />
             <Route path="tools" element={<AdminToolsPage />} />
-            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="users" element={
+              <AuthGuard allowedRoles={["admin"]}>
+                <AdminUsersPage />
+              </AuthGuard>
+            } />
             <Route path="audit" element={<AdminAuditPage />} />
           </Route>
         </Routes>

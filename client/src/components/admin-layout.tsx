@@ -46,14 +46,23 @@ export function AdminLayout() {
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
+  const userRole = sessionStorage.getItem("user_role") || "operator";
+  const isAdmin = userRole === "admin";
+  const isHighLevel = userRole === "high-level";
+
   useEffect(() => {
     const token = sessionStorage.getItem("user_token");
-    const role = sessionStorage.getItem("user_role");
-    if (!token || role !== "admin") {
+    if (!token || (!isAdmin && !isHighLevel)) {
       toast.error("權限不足，請重新登入");
       navigate("/login");
     }
-  }, [navigate]);
+  }, [navigate, isAdmin, isHighLevel]);
+
+  const filteredNavItems = NAV_ITEMS.filter(item => {
+    // Only admin can see user management
+    if (item.path === "/admin/users") return isAdmin;
+    return true;
+  });
 
   const handleLogout = () => {
     sessionStorage.removeItem("user_token");
@@ -75,7 +84,7 @@ export function AdminLayout() {
 
       <div className="flex-1 overflow-y-auto min-h-0 py-4 custom-scrollbar">
         <nav className="px-4 space-y-1">
-          {NAV_ITEMS.map((item) => {
+          {filteredNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
@@ -100,7 +109,9 @@ export function AdminLayout() {
 
       <div className="p-4 border-t border-slate-800/50 shrink-0 bg-slate-900/50">
         <div className="bg-slate-800/50 rounded-2xl p-4 mb-4">
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">當前管理員</p>
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
+            當前權限：{isAdmin ? "系統管理員" : "高級運營"}
+          </p>
           <p className="text-sm font-bold text-slate-200 truncate">{sessionStorage.getItem("user_name") || "Administrator"}</p>
         </div>
         
@@ -161,7 +172,7 @@ export function AdminLayout() {
               </Sheet>
             )}
             <h1 className="text-base md:text-lg font-black text-slate-800 truncate">
-              {NAV_ITEMS.find(item => item.path === location.pathname)?.label || "管理控制台"}
+              {filteredNavItems.find(item => item.path === location.pathname)?.label || "管理控制台"}
             </h1>
           </div>
           
@@ -179,4 +190,3 @@ export function AdminLayout() {
     </div>
   );
 }
-

@@ -5,11 +5,12 @@ import { toast } from "sonner";
 interface AuthGuardProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
+  allowedRoles?: string[];
 }
 
 const TIMEOUT_DURATION = 60 * 60 * 1000; // 60 minutes in milliseconds
 
-export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
+export function AuthGuard({ children, requireAdmin = false, allowedRoles }: AuthGuardProps) {
   const token = sessionStorage.getItem("user_token");
   const role = sessionStorage.getItem("user_role");
   const lastActivity = sessionStorage.getItem("last_activity");
@@ -57,7 +58,13 @@ export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Check legacy requireAdmin
   if (requireAdmin && role !== "admin") {
+    return <Navigate to="/" replace />;
+  }
+
+  // Check granular allowedRoles
+  if (allowedRoles && role && !allowedRoles.includes(role)) {
     return <Navigate to="/" replace />;
   }
 

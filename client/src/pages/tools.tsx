@@ -33,7 +33,7 @@ export default function ToolsPage() {
 
   // Get user role from session storage or default to operator
   const userRole = sessionStorage.getItem("user_role") || "operator"; 
-  const canSeeSensitive = userRole === "admin" || userRole === "high_level";
+  const canSeeSensitive = userRole === "admin" || userRole === "high-level";
 
   useEffect(() => {
     const fetchTools = async () => {

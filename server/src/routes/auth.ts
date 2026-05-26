@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { db } from '../db';
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
+import { logAudit } from '../utils/audit';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev-only';
@@ -30,6 +31,13 @@ router.post('/login', async (req, res) => {
     await db.update(users)
       .set({ lastLogin: now })
       .where(eq(users.id, user.id));
+
+    // Log login action to audit logs
+    await logAudit(user.username, 'LOGIN', 'user_session', { 
+      displayName: user.displayName,
+      role: user.role,
+      ip: req.ip 
+    });
 
     // Sign JWT
     const token = jwt.sign(

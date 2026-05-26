@@ -14,27 +14,13 @@ import {
 } from '../db/schema';
 import { sql } from 'drizzle-orm';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
+import { logAudit } from '../utils/audit';
 
 const router = express.Router();
 
 // Apply admin protection to all routes in this file
 router.use(authenticateToken);
 router.use(requireAdmin);
-
-// Helper to log audit events to DB
-const logAudit = async (admin: string, action: string, target: string, details: any) => {
-  try {
-    await db.insert(auditLogs).values({
-      timestamp: new Date().toISOString(),
-      admin,
-      action,
-      target,
-      details
-    });
-  } catch (e) {
-    console.error("Failed to log audit event:", e);
-  }
-};
 
 // Generic update endpoint
 router.post('/update/:type', async (req, res) => {

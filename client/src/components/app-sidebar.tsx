@@ -47,7 +47,7 @@ export function AppSidebar() {
   
   const userName = sessionStorage.getItem("user_name") || "未登入"
   const userRole = sessionStorage.getItem("user_role") || "operator"
-  const isAdmin = userRole === "admin"
+  const canAccessAdmin = userRole === "admin" || userRole === "high-level"
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -164,7 +164,7 @@ export function AppSidebar() {
             )}
             
             <div className="space-y-1">
-              {isAdmin && (
+              {canAccessAdmin && (
                 <SidebarMenuButton 
                   asChild 
                   tooltip="進入管理後台"
@@ -194,5 +194,3 @@ export function AppSidebar() {
     </>
   )
 }
-
-

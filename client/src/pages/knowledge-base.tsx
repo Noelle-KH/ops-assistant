@@ -74,6 +74,10 @@ export default function KnowledgeBasePage() {
   const [showEnglish, setShowEnglish] = useState<Record<string, boolean>>({});
   const [sortMethod, setSortMethod] = useState<SortMethod>("default");
   
+  // Role based access
+  const userRole = sessionStorage.getItem("user_role") || "operator";
+  const canSeeOpsNote = userRole === "admin" || userRole === "high-level";
+
   // URL Params & Search Params
   const params = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
@@ -389,7 +393,7 @@ export default function KnowledgeBasePage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                      {faq.ops_note && (
+                      {faq.ops_note && canSeeOpsNote && (
                         <div className="p-4 rounded-xl bg-orange-50/50 border border-orange-100 flex gap-3 shadow-sm h-fit">
                           <Info className="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
                           <div className="space-y-1">

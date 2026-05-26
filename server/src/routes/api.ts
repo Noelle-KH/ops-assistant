@@ -2,7 +2,7 @@ import express from 'express';
 import { db } from '../db';
 import { faqs, sops, templates, groups, tools, announcements, categories } from '../db/schema';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { asc, desc } from 'drizzle-orm';
+import { asc, desc, sql } from 'drizzle-orm';
 
 const router = express.Router();
 
@@ -104,6 +104,72 @@ router.get('/announcements', async (req, res) => {
   } catch (error) {
     console.error('Error fetching announcements:', error);
     res.status(500).json({ error: 'Failed to fetch announcements data' });
+  }
+});
+
+// Unified Search Endpoint
+router.get('/search', async (req, res) => {
+  const { q } = req.query;
+  if (!q || typeof q !== 'string') {
+    return res.json([]);
+  }
+
+  const query = q.toLowerCase();
+  const pattern = `%${query}%`;
+
+  try {
+    const [faqData, sopData, templateData] = await Promise.all([
+      db.select().from(faqs).where(sql`
+        LOWER(question) LIKE ${pattern} OR 
+        LOWER(answer) LIKE ${pattern} OR 
+        LOWER(tags) LIKE ${pattern} OR 
+        LOWER(category) LIKE ${pattern}
+      `).limit(10),
+      db.select().from(sops).where(sql`
+        LOWER(title) LIKE ${pattern} OR 
+        LOWER(category) LIKE ${pattern} OR 
+        LOWER(tags) LIKE ${pattern} OR 
+        LOWER(rule) LIKE ${pattern}
+      `).limit(10),
+      db.select().from(templates).where(sql`
+        LOWER(title) LIKE ${pattern} OR 
+        LOWER(category) LIKE ${pattern} OR 
+        LOWER(tags) LIKE ${pattern} OR 
+        LOWER(variants) LIKE ${pattern}
+      `).limit(10),
+    ]);
+
+    const results = [
+      ...faqData.map(f => ({
+        id: f.id,
+        title: f.question,
+        type: 'FAQ' as const,
+        category: f.category,
+        path: `/knowledge-base?id=${f.id}&type=faq`,
+        snippet: f.answer.substring(0, 100)
+      })),
+      ...sopData.map(s => ({
+        id: s.id,
+        title: s.title,
+        type: 'SOP' as const,
+        category: s.category,
+        path: `/knowledge-base?id=${s.id}&type=sop`,
+        snippet: s.rule?.description?.substring(0, 100)
+      })),
+      ...templateData.map(t => ({
+        id: t.id,
+        title: t.title,
+        type: 'Template' as const,
+        category: t.category,
+        path: `/templates?id=${t.id}`,
+        snippet: t.variants?.[0]?.body?.substring(0, 100)
+      }))
+    ];
+
+    res.json(results.sort((a, b) => a.title.localeCompare(b.title)).slice(0, 15));
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ error: 'Search failed' });
   }
 });
 

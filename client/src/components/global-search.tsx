@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, FileText, Mail, BookOpen, ArrowRight, Loader2, AlertCircle, RefreshCw, Info } from "lucide-react";
 import {
   Dialog,
@@ -27,158 +27,61 @@ export function GlobalSearch({ open, onOpenChange }: { open: boolean, onOpenChan
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dataLoaded, setDataLoaded] = useState(false);
-  const [data, setData] = useState<{ faqs: any[], sops: any[], templates: any[] }>({ 
-    faqs: [], 
-    sops: [], 
-    templates: [] 
-  });
-  
   const navigate = useNavigate();
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   // 當視窗關閉時清除搜尋內容
   useEffect(() => {
     if (!open) {
       setQuery("");
       setResults([]);
+      setError(null);
     }
   }, [open]);
 
-  const fetchData = useCallback(async () => {
+  const performSearch = useCallback(async (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
+
     try {
-      // 嘗試獲取所有數據，使用 Promise.allSettled 以免單個失敗導致全部失敗
-      const results = await Promise.allSettled([
-        fetch(`${API_BASE_URL}/api/faq`).then(res => res.json()),
-        fetch(`${API_BASE_URL}/api/sop`).then(res => res.json()),
-        fetch(`${API_BASE_URL}/api/templates`).then(res => res.json())
-      ]);
-      
-      const faqs = results[0].status === 'fulfilled' ? results[0].value : [];
-      const sops = results[1].status === 'fulfilled' ? results[1].value : [];
-      const templates = results[2].status === 'fulfilled' ? results[2].value : [];
-
-      if (results.every(r => r.status === 'rejected')) {
-        throw new Error("無法連接到伺服器，請檢查網路連線。");
-      }
-
-      setData({ faqs, sops, templates });
-      setDataLoaded(true);
+      const response = await fetch(`${API_BASE_URL}/api/search?q=${encodeURIComponent(searchTerm)}`);
+      if (!response.ok) throw new Error("搜尋失敗");
+      const data = await response.json();
+      setResults(data);
     } catch (err: any) {
-      console.error("Failed to fetch search data:", err);
-      setError(err.message || "載入搜尋資料失敗");
+      console.error("Search API error:", err);
+      setError("無法取得搜尋結果，請稍後再試。");
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (open && !dataLoaded && !loading) {
-      fetchData();
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
     }
-  }, [open, dataLoaded, loading, fetchData]);
 
-  useEffect(() => {
     if (!query.trim()) {
       setResults([]);
+      setLoading(false);
       return;
     }
 
-    const q = query.trim().toLowerCase();
-    if (!q) {
-      setResults([]);
-      return;
-    }
+    setLoading(true);
+    debounceTimer.current = setTimeout(() => {
+      void performSearch(query);
+    }, 300);
 
-    const searchResults: SearchResult[] = [];
-
-    // Search FAQs
-    if (Array.isArray(data.faqs)) {
-      data.faqs.forEach(f => {
-        const question = (f.question || "").toLowerCase();
-        const answer = (f.answer || "").toLowerCase();
-        const category = (f.category || "").toLowerCase();
-        const opsNote = (f.ops_note || "").toLowerCase();
-        
-        // 更強大的標籤搜尋：支援陣列與字串格式
-        let tagsStr = "";
-        if (Array.isArray(f.tags)) {
-          tagsStr = f.tags.join(" ").toLowerCase();
-        } else if (typeof f.tags === "string") {
-          tagsStr = f.tags.toLowerCase();
-        }
-        
-        if (
-          question.includes(q) || 
-          answer.includes(q) || 
-          tagsStr.includes(q) || 
-          opsNote.includes(q) ||
-          category.includes(q)
-        ) {
-          searchResults.push({
-            id: f.id,
-            title: f.question,
-            type: "FAQ",
-            category: f.category || "未分類",
-            path: `/knowledge-base?id=${f.id}&type=faq`,
-            snippet: (f.answer || "").substring(0, 60) + ((f.answer || "").length > 60 ? "..." : "")
-          });
-        }
-      });
-    }
-
-    // Search SOPs
-    if (Array.isArray(data.sops)) {
-      data.sops.forEach(s => {
-        const title = (s.title || "").toLowerCase();
-        const category = (s.category || "").toLowerCase();
-        const description = (s.rule?.description || "").toLowerCase();
-        
-        let tagsStr = "";
-        if (Array.isArray(s.tags)) {
-          tagsStr = s.tags.join(" ").toLowerCase();
-        } else if (typeof s.tags === "string") {
-          tagsStr = s.tags.toLowerCase();
-        }
-        
-        if (title.includes(q) || description.includes(q) || tagsStr.includes(q) || category.includes(q)) {
-          searchResults.push({
-            id: s.id,
-            title: s.title,
-            type: "SOP",
-            category: s.category || "未分類",
-            path: `/knowledge-base?id=${s.id}&type=sop`,
-            snippet: (s.rule?.description || "").substring(0, 60) + ((s.rule?.description || "").length > 60 ? "..." : "")
-          });
-        }
-      });
-    }
-
-    // Search Templates
-    if (Array.isArray(data.templates)) {
-      data.templates.forEach(t => {
-        const title = (t.title || "").toLowerCase();
-        const tags = Array.isArray(t.tags) ? t.tags.join(" ").toLowerCase() : "";
-        const variantsContent = Array.isArray(t.variants) 
-          ? t.variants.map((v: any) => `${v.label} ${v.body}`).join(" ").toLowerCase()
-          : "";
-        
-        if (title.includes(q) || variantsContent.includes(q) || tags.includes(q)) {
-          searchResults.push({
-            id: t.id,
-            title: t.title,
-            type: "Template",
-            category: t.category || "未分類",
-            path: `/templates?id=${t.id}`,
-            snippet: t.variants?.[0]?.body?.substring(0, 60) + (t.variants?.[0]?.body?.length > 60 ? "..." : "")
-          });
-        }
-      });
-    }
-
-    setResults(searchResults.slice(0, 10)); // Limit to 10 results
-  }, [query, data]);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [query, performSearch]);
 
   const handleSelect = (path: string) => {
     navigate(path);
@@ -220,12 +123,11 @@ export function GlobalSearch({ open, onOpenChange }: { open: boolean, onOpenChan
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-bold text-slate-900">{error}</p>
-                  <p className="text-xs text-slate-500">請確認後端伺服器已啟動並可從此網址存取</p>
                 </div>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={fetchData}
+                  onClick={() => performSearch(query)}
                   className="gap-2 font-bold rounded-lg"
                 >
                   <RefreshCw className="h-4 w-4" />
@@ -276,7 +178,7 @@ export function GlobalSearch({ open, onOpenChange }: { open: boolean, onOpenChan
                   </button>
                 ))}
               </div>
-            ) : query.trim() ? (
+            ) : query.trim() && !loading ? (
               <div className="py-20 text-center space-y-3">
                 <div className="h-16 w-16 bg-slate-50 text-slate-200 rounded-full flex items-center justify-center mx-auto">
                   <Search className="h-8 w-8" />
@@ -286,7 +188,7 @@ export function GlobalSearch({ open, onOpenChange }: { open: boolean, onOpenChan
                   <p className="text-xs text-slate-400">請嘗試更換關鍵字，例如「入金」、「出金」或「SOP」</p>
                 </div>
               </div>
-            ) : (
+            ) : !loading ? (
               <div className="py-12 px-8">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">熱門搜尋建議</p>
                 <div className="flex flex-wrap gap-2.5">
@@ -311,6 +213,11 @@ export function GlobalSearch({ open, onOpenChange }: { open: boolean, onOpenChan
                   </div>
                 </div>
               </div>
+            ) : (
+              <div className="py-20 flex flex-col items-center justify-center space-y-4">
+                <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                <p className="text-xs text-slate-400 font-bold animate-pulse">搜尋中...</p>
+              </div>
             )}
           </div>
         </ScrollArea>
@@ -323,7 +230,7 @@ export function GlobalSearch({ open, onOpenChange }: { open: boolean, onOpenChan
           </div>
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>領航站 全域搜尋 v1.2</span>
+            <span>領航站 全域搜尋 v2.0</span>
           </div>
         </div>
       </DialogContent>
