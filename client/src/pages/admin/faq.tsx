@@ -61,6 +61,49 @@ export default function AdminFaqPage() {
   const [tagInput, setTagInput] = useState("");
   const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [isRenamingCategory, setIsRenamingCategory] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+
+  const handleRenameCategory = async () => {
+    if (!renameValue.trim() || !currentFaq?.category) return;
+    const oldName = currentFaq.category;
+    const newName = renameValue.trim();
+    
+    if (oldName === newName) {
+      setIsRenamingCategory(false);
+      return;
+    }
+
+    try {
+      const admin = sessionStorage.getItem("user_name") || "Admin";
+      await fetchWithAuth(`${API_BASE_URL}/api/admin/rename-category`, {
+        method: "POST",
+        body: JSON.stringify({ 
+          type: "faq", 
+          oldName, 
+          newName, 
+          admin 
+        })
+      });
+      
+      toast.success(`分類已重命名為 ${newName}`);
+      
+      // Update local state
+      setAllCategories(prev => prev.map(c => 
+        (c.name === oldName && c.type === "faq") ? { ...c, name: newName } : c
+      ));
+      
+      setFaqs(prev => prev.map(f => 
+        f.category === oldName ? { ...f, category: newName } : f
+      ));
+      
+      setCurrentFaq(prev => ({ ...prev!, category: newName }));
+      setIsRenamingCategory(false);
+    } catch (error) {
+      console.error("Rename error:", error);
+      toast.error("重命名失敗");
+    }
+  };
 
   // Filter categories for FAQ display
   const faqCategories = allCategories.filter(c => c.type === "faq");
@@ -342,17 +385,44 @@ export default function AdminFaqPage() {
               <div className="space-y-3 col-span-1">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex justify-between">
                   分類
-                  {isAddingNewCategory ? (
-                    <button onClick={() => setIsAddingNewCategory(false)} className="text-primary hover:underline">選擇現有</button>
-                  ) : (
-                    <button onClick={() => {
-                      setIsAddingNewCategory(true);
-                      setNewCategoryName("");
-                    }} className="text-primary hover:underline">+ 新增分類</button>
-                  )}
+                  <div className="flex gap-2">
+                    {!isAddingNewCategory && !isRenamingCategory && currentFaq?.category && (
+                      <button 
+                        onClick={() => {
+                          setIsRenamingCategory(true);
+                          setRenameValue(currentFaq.category || "");
+                        }} 
+                        className="text-amber-600 hover:underline"
+                      >
+                        重命名
+                      </button>
+                    )}
+                    {isAddingNewCategory ? (
+                      <button onClick={() => setIsAddingNewCategory(false)} className="text-primary hover:underline">選擇現有</button>
+                    ) : (
+                      <button onClick={() => {
+                        setIsAddingNewCategory(true);
+                        setNewCategoryName("");
+                      }} className="text-primary hover:underline">+ 新增分類</button>
+                    )}
+                  </div>
                 </Label>
 
-                {isAddingNewCategory ? (
+                {isRenamingCategory ? (
+                  <div className="space-y-2">
+                    <Input 
+                      placeholder="輸入新名稱..."
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      className="rounded-xl border-amber-500/30 focus:border-amber-500"
+                      autoFocus
+                    />
+                    <div className="flex gap-1">
+                      <Button size="sm" className="h-8 text-[10px] flex-1 bg-amber-600 hover:bg-amber-700" onClick={handleRenameCategory}>確認重命名</Button>
+                      <Button size="sm" variant="ghost" className="h-8 text-[10px]" onClick={() => setIsRenamingCategory(false)}>取消</Button>
+                    </div>
+                  </div>
+                ) : isAddingNewCategory ? (
                   <Input 
                     placeholder="輸入新分類名稱..."
                     value={newCategoryName}

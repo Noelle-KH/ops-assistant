@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { API_BASE_URL, fetchWithAuth } from "@/lib/utils";
+import { cn, API_BASE_URL, fetchWithAuth } from "@/lib/utils";
 
 interface AccountItem {
   role: string;
@@ -90,8 +90,6 @@ export default function ToolsPage() {
     setShowPasswords(prev => ({ ...prev, [accId]: !prev[accId] }));
   };
 
-  const categories = ["後台系統", "測試資源", "敏感資源"];
-
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "admin": return "系統管理員";
@@ -116,7 +114,7 @@ export default function ToolsPage() {
       <div className="relative">
         <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
         <Input
-          placeholder="搜尋系統名稱、功能或類別..."
+          placeholder="搜尋系統名稱或功能..."
           className="pl-11 h-12 bg-white shadow-sm border-slate-200 focus:ring-primary"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -124,83 +122,81 @@ export default function ToolsPage() {
       </div>
 
       <ScrollArea className="h-[calc(100vh-20rem)] rounded-2xl border bg-white/50 p-1">
-        <div className="p-6 space-y-12">
+        <div className="p-6">
           {loading ? (
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <Card key={i} className="h-48 animate-pulse bg-slate-100" />
                 ))}
              </div>
-          ) : categories.map(cat => {
-            const catTools = filteredTools.filter(t => t.category === cat);
-            if (catTools.length === 0) return null;
-            
-            return (
-              <div key={cat} className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-primary" />
-                  <h3 className="text-lg font-black text-slate-800 uppercase tracking-widest">{cat}</h3>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {catTools.map(tool => (
-                    <Card key={tool.id} className="border-slate-200 hover:shadow-md transition-all group">
-                      <CardHeader className="pb-3 flex flex-row items-start justify-between space-y-0">
-                        <div className="space-y-1">
-                          <CardTitle className="text-xl font-bold text-slate-900">{tool.name}</CardTitle>
-                          <CardDescription>{tool.desc}</CardDescription>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredTools.map(tool => (
+                <Card key={tool.id} className="border-slate-200 hover:shadow-md transition-all group">
+                  <CardHeader className="pb-3 flex flex-row items-start justify-between space-y-0">
+                    <div className="space-y-1">
+                      <CardTitle className="text-xl font-bold text-slate-900">{tool.name}</CardTitle>
+                      <CardDescription>{tool.desc}</CardDescription>
+                    </div>
+                    {tool.url && (
+                      <Button variant="ghost" size="icon" className="text-slate-400 hover:text-primary" asChild>
+                        <a href={tool.url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-5 w-5" />
+                        </a>
+                      </Button>
+                    )}
+                  </CardHeader>
+                  
+                  <CardContent>
+                    {tool.accounts && tool.accounts.length > 0 ? (
+                      <div className="space-y-3 mt-2">
+                        <div className="flex items-center justify-between px-1">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">帳號資訊 ({tool.accounts.length})</span>
                         </div>
-                        {tool.url && (
-                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-primary" asChild>
-                            <a href={tool.url} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-5 w-5" />
-                            </a>
-                          </Button>
-                        )}
-                      </CardHeader>
-                      
-                      <CardContent>
-                        {tool.accounts && tool.accounts.length > 0 ? (
-                          <div className="space-y-3 mt-2">
+                        <ScrollArea className={cn(
+                          "rounded-xl border border-slate-100 bg-slate-50/30 p-2",
+                          tool.accounts.length > 3 ? "h-[280px]" : "h-auto"
+                        )}>
+                          <div className="space-y-3 pr-3">
                             {tool.accounts.map((acc, idx) => {
                               const accId = `${tool.id}-${idx}`;
                               const isRestricted = acc.is_sensitive && !canSeeSensitive;
                               
                               return (
-                                <div key={accId} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-3">
+                                <div key={accId} className="rounded-lg border border-slate-100 bg-white p-3 space-y-2.5 shadow-sm">
                                   <div className="flex items-center justify-between">
-                                    <Badge variant="secondary" className="bg-slate-200 text-slate-600 border-none font-bold text-[10px]">
+                                    <Badge variant="secondary" className="bg-slate-100 text-slate-500 border-none font-bold text-[9px]">
                                       {acc.role}
                                     </Badge>
                                     {acc.is_sensitive && <Lock className="h-3 w-3 text-orange-400" />}
                                   </div>
 
                                   {isRestricted ? (
-                                    <div className="flex flex-col items-center justify-center py-4 text-center">
-                                      <ShieldAlert className="h-6 w-6 text-slate-300 mb-2" />
-                                      <p className="text-[10px] font-bold text-slate-400">僅限高級權限查看</p>
+                                    <div className="flex flex-col items-center justify-center py-2 text-center">
+                                      <ShieldAlert className="h-4 w-4 text-slate-300 mb-1" />
+                                      <p className="text-[9px] font-bold text-slate-400">僅限高級權限查看</p>
                                     </div>
                                   ) : (
-                                    <div className="grid grid-cols-1 gap-3">
-                                      <div className="flex items-center justify-between gap-2 p-2 rounded bg-white border border-slate-100 group/item">
+                                    <div className="grid grid-cols-1 gap-2">
+                                      <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded bg-slate-50/50 border border-slate-100 group/item">
                                         <div className="flex items-center gap-2 overflow-hidden">
-                                          <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                                          <span className="text-xs font-mono font-bold text-slate-700 truncate">{acc.username}</span>
+                                          <User className="h-3 w-3 text-slate-400 shrink-0" />
+                                          <span className="text-[11px] font-mono font-bold text-slate-700 truncate">{acc.username}</span>
                                         </div>
                                         <Button 
                                           variant="ghost" 
                                           size="icon" 
-                                          className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                                          className="h-5 w-5 opacity-0 group-hover/item:opacity-100 transition-opacity"
                                           onClick={() => handleCopy(acc.username, `${accId}-u`)}
                                         >
                                           {copiedKey === `${accId}-u` ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
                                         </Button>
                                       </div>
 
-                                      <div className="flex items-center justify-between gap-2 p-2 rounded bg-white border border-slate-100 group/item">
+                                      <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded bg-slate-50/50 border border-slate-100 group/item">
                                         <div className="flex items-center gap-2 overflow-hidden">
-                                          <Key className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                                          <span className="text-xs font-mono font-bold text-slate-700 truncate">
+                                          <Key className="h-3 w-3 text-slate-400 shrink-0" />
+                                          <span className="text-[11px] font-mono font-bold text-slate-700 truncate">
                                             {showPasswords[accId] ? acc.password : "••••••••••••"}
                                           </span>
                                         </div>
@@ -208,7 +204,7 @@ export default function ToolsPage() {
                                           <Button 
                                             variant="ghost" 
                                             size="icon" 
-                                            className="h-6 w-6"
+                                            className="h-5 w-5"
                                             onClick={() => togglePassword(accId)}
                                           >
                                             {showPasswords[accId] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
@@ -216,7 +212,7 @@ export default function ToolsPage() {
                                           <Button 
                                             variant="ghost" 
                                             size="icon" 
-                                            className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                                            className="h-5 w-5 opacity-0 group-hover/item:opacity-100 transition-opacity"
                                             onClick={() => handleCopy(acc.password, `${accId}-p`)}
                                           >
                                             {copiedKey === `${accId}-p` ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
@@ -229,23 +225,23 @@ export default function ToolsPage() {
                               );
                             })}
                           </div>
-                        ) : (
-                          <div className="pt-2">
-                             <Button variant="outline" className="w-full font-bold group-hover:bg-primary group-hover:text-white transition-colors" asChild>
-                               <a href={tool.url} target="_blank" rel="noopener noreferrer">
-                                 立即訪問系統
-                                 <ExternalLink className="ml-2 h-4 w-4" />
-                               </a>
-                             </Button>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+                        </ScrollArea>
+                      </div>
+                    ) : (
+                      <div className="pt-2">
+                         <Button variant="outline" className="w-full font-bold group-hover:bg-primary group-hover:text-white transition-colors" asChild>
+                           <a href={tool.url} target="_blank" rel="noopener noreferrer">
+                             立即訪問系統
+                             <ExternalLink className="ml-2 h-4 w-4" />
+                           </a>
+                         </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
           
           {!loading && filteredTools.length === 0 && (
             <div className="py-32 text-center space-y-4">

@@ -49,20 +49,11 @@ export default function AdminToolsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentTool, setCurrentTool] = useState<Partial<ToolItem> | null>(null);
-  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-
-  // Get unique categories from existing tools
-  const existingCategories = Array.from(new Set(tools.map(t => t.category))).filter(Boolean);
-  const displayCategories = existingCategories.length > 0 ? existingCategories : ["一般"];
 
   const fetchTools = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("user_token");
-      const res = await fetch(`${API_BASE_URL}/api/tools`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/tools`);
       const data = await res.json();
       if (Array.isArray(data)) {
         setTools(data);
@@ -81,20 +72,19 @@ export default function AdminToolsPage() {
   }, []);
 
   const handleSave = async () => {
-    if (!currentTool?.name || !currentTool?.category) {
-      toast.error("請填寫名稱與分類");
+    if (!currentTool?.name) {
+      toast.error("請填寫工具名稱");
       return;
     }
 
     setIsSaving(true);
-    const admin = localStorage.getItem("user_name") || "Admin";
-    const token = localStorage.getItem("user_token");
+    const admin = sessionStorage.getItem("user_name") || "Admin";
     let updatedTools = [...tools];
 
     const cleanedTool = {
       ...currentTool,
       name: currentTool.name || "",
-      category: currentTool.category || "其他",
+      category: "工具資源", // Default category for consistency in DB
       desc: currentTool.desc || "",
       url: currentTool.url || "",
       accounts: currentTool.accounts || []
@@ -108,12 +98,8 @@ export default function AdminToolsPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/tools`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/tools`, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
         body: JSON.stringify({ data: updatedTools, admin })
       });
 
@@ -133,17 +119,12 @@ export default function AdminToolsPage() {
   const deleteTool = async (id: string) => {
     if (!confirm("確定要刪除此工具嗎？")) return;
     
-    const admin = localStorage.getItem("user_name") || "Admin";
-    const token = localStorage.getItem("user_token");
+    const admin = sessionStorage.getItem("user_name") || "Admin";
     const updated = tools.filter(t => t.id !== id);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/update/tools`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/admin/update/tools`, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
         body: JSON.stringify({ data: updated, admin })
       });
       if (res.ok) {
@@ -170,7 +151,6 @@ export default function AdminToolsPage() {
 
   const filteredTools = tools.filter(t => 
     t.name.toLowerCase().includes(search.toLowerCase()) ||
-    t.category.toLowerCase().includes(search.toLowerCase()) ||
     t.desc.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -180,14 +160,14 @@ export default function AdminToolsPage() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="搜尋工具名稱、分類或描述..."
+            placeholder="搜尋工具名稱或描述..."
             className="pl-10 h-11 rounded-xl"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <Button onClick={() => {
-          setCurrentTool({ category: "後台系統", accounts: [] });
+          setCurrentTool({ category: "工具資源", accounts: [] });
           setIsEditing(true);
         }} className="rounded-xl h-11 font-bold shadow-lg shadow-primary/20">
           <Plus className="mr-2 h-4 w-4" /> 建立新工具
@@ -205,7 +185,6 @@ export default function AdminToolsPage() {
               <div>
                 <div className="flex justify-between items-start mb-3">
                   <div className="space-y-1">
-                    <Badge variant="secondary" className="text-[10px] font-bold uppercase">{tool.category}</Badge>
                     <h3 className="text-lg font-black text-slate-900">{tool.name}</h3>
                   </div>
                   <div className="flex gap-1">
@@ -257,50 +236,6 @@ export default function AdminToolsPage() {
                     onChange={e => setCurrentTool({...currentTool!, name: e.target.value})}
                   />
                 </div>
-                <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex justify-between">
-                    分類
-                    {isAddingNewCategory ? (
-                      <button onClick={() => setIsAddingNewCategory(false)} className="text-primary hover:underline font-bold">選擇現有</button>
-                    ) : (
-                      <button onClick={() => {
-                        setIsAddingNewCategory(true);
-                        setNewCategoryName("");
-                      }} className="text-primary hover:underline font-bold">+ 新增分類</button>
-                    )}
-                  </Label>
-                  
-                  {isAddingNewCategory ? (
-                    <Input 
-                      placeholder="輸入新分類名稱..."
-                      value={newCategoryName}
-                      onChange={(e) => {
-                        setNewCategoryName(e.target.value);
-                        setCurrentTool(prev => ({ ...prev!, category: e.target.value }));
-                      }}
-                      className="h-11 rounded-xl border-primary/30 focus:border-primary font-bold"
-                      autoFocus
-                    />
-                  ) : (
-                    <div className="flex flex-wrap gap-2 p-3 rounded-xl border border-slate-100 bg-slate-50/50">
-                      {displayCategories.map(cat => (
-                        <button
-                          key={cat}
-                          onClick={() => setCurrentTool({...currentTool!, category: cat})}
-                          className={cn(
-                            "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all",
-                            currentTool?.category === cat ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-500 border-slate-200 hover:border-primary/50"
-                          )}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">系統網址 (URL)</Label>
                   <Input 
@@ -310,15 +245,16 @@ export default function AdminToolsPage() {
                     onChange={e => setCurrentTool({...currentTool!, url: e.target.value})}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">備註說明</Label>
-                  <Input 
-                    placeholder="簡述此系統的用途..." 
-                    className="h-11 rounded-xl"
-                    value={currentTool?.desc || ""}
-                    onChange={e => setCurrentTool({...currentTool!, desc: e.target.value})}
-                  />
-                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">備註說明</Label>
+                <Input 
+                  placeholder="簡述此系統的用途..." 
+                  className="h-11 rounded-xl"
+                  value={currentTool?.desc || ""}
+                  onChange={e => setCurrentTool({...currentTool!, desc: e.target.value})}
+                />
               </div>
 
               <div className="space-y-4">
