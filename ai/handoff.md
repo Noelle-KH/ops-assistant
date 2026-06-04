@@ -2,41 +2,33 @@
 
 ## 1. 今日完成事項 (Completed Today)
 
-- **系統操作稽核視覺化 (System Audit Logs Visualization)**:
-  - **詳動詳情彈窗**: 在 `AdminAuditPage` 實作異動詳情彈窗，視覺化展示每次更新所影響的具體項目 IDs（新增、修改、刪除）。
-  - **後端稽核工具化**: 建立 `server/src/utils/audit.ts` 共用工具，標準化全系統稽核日誌格式。
-  - **登入行為追蹤**: 在 `auth` 路由整合稽核工具，自動記錄管理員登入時間、姓名、角色及來源 IP。
+- **工具管理模組重構 (Tool Management Refactoring)**:
+  - **移除分類機制**: 根據實用性評估，移除了「系統工具」的分類功能，簡化為扁平化網格佈局，大幅降低維護成本。
+  - **介面佈局優化**: 實作工具卡片內部滾動區域 (`ScrollArea`)，當帳號組超過 3 組時自動啟用滾動，避免卡片無限拉長，保持頁面整潔。
+  - **後台管理簡化**: 移除管理介面的分類編輯器，改為統一預設分類，提升非技術人員的維護效率。
 
-- **全域搜索增強 v2.0 (Global Search Enhancement)**:
-  - **後端搜尋 API**: 在 `server/src/routes/api.ts` 實作高效能搜尋端點，支援跨 FAQ, SOP 及 Email Templates 的模糊比對。
-  - **前端效能優化**: 重構 `GlobalSearch` 組件，捨棄笨重的「全量數據預載」，改採「後端即時查詢 + 300ms Debounce」機制。
-  - **搜尋體驗升級**: 強化搜尋聯想 UI，支援 Snippet 預覽、熱門關鍵字建議及錯誤重試機制。
+- **系統穩定性與安全修復 (Stability & Security Fixes)**:
+  - **403 認證修復**: 修正 `AdminToolsPage` 認證資訊存儲位置錯誤（localStorage 轉 sessionStorage），統一全域認證機制，解決儲存失敗問題。
+  - **500 更新錯誤修復**: 在後端通用更新介面實作「防禦性密碼還原」邏輯，防止前端遮罩密碼 (`●●●●●●●●`) 覆蓋資料庫真實數據，確保資料完整性。
+  - **請求工具標準化**: 全面將工具管理頁面的 API 請求遷移至 `fetchWithAuth` 封裝，自動處理 Token 注入與過期重定向。
 
-- **細分權限控制 (Granular Permission Control - RBAC)**:
-  - **權限組件強化**: 升級 `AuthGuard` 組件，支援 `allowedRoles` 多角色陣列校驗。
-  - **角色標準化**: 統一全系統角色為 `admin` (系統管理員)、`high-level` (高級人員)、`operator` (一般人員)。
-  - **機敏欄位遮蔽**: 實作 `ops_note` (運營備注) 與敏感測試帳號密碼的權限控管，僅高級權限者可見。
-  - **後台管理分級**: 開放 `high-level` 進入管理後台查看 Dashboard 與系統日誌，但將「帳號管理」限制為 `admin` 專屬。
+- **UI/UX 體驗增強**:
+  - **視覺層級優化**: 強化工具卡片內的帳號統計與標籤展示，並微調緊湊佈局下的字體與圖標比例。
+  - **搜尋邏輯更新**: 優化全域與局部搜尋，確保在移除分類後仍能精準匹配工具名稱與備註。
 
 ## 2. 修改過的檔案 (Files Modified)
 - **Backend**: 
-  - `server/src/utils/audit.ts` (New)
-  - `server/src/routes/api.ts`, `server/src/routes/admin.ts`, `server/src/routes/auth.ts`
+  - `server/src/routes/admin.ts` (新增防禦性數據過濾邏輯)
 - **Frontend Components**: 
-  - `client/src/components/global-search.tsx`
-  - `client/src/components/auth-guard.tsx`
-  - `client/src/components/admin-layout.tsx`
-  - `client/src/components/app-sidebar.tsx`
-- **Frontend Pages**: 
-  - `client/src/pages/admin/audit.tsx`
-  - `client/src/pages/tools.tsx`
-  - `client/src/pages/knowledge-base.tsx`
-  - `client/src/App.tsx`
+  - `client/src/pages/tools.tsx` (重構佈局與新增滾動區域)
+  - `client/src/pages/admin/tools.tsx` (修復認證邏輯與簡化介面)
+- **Shared Utils**:
+  - `client/src/lib/utils.ts` (確認 fetchWithAuth 邏輯)
 
 ## 3. 下一步工作 (Next Steps)
-- **批量匯出功能增強**: 支援稽核日誌與知識庫內容的 CSV/Excel 導出。
+- **批量匯出功能增強**: 支援稽核日誌與知識庫內容的 CSV/Excel 導出 (優先級高)。
 - **系統效能監控**: 在管理後台 Dashboard 實作基本的 API 延遲與資料庫健康度監控。
-- **互動式引導**: 為新加入的運營人員實作首頁功能的引導氣泡 (Onboarding Tooltips)。
+- **資料庫遷移腳本**: 考慮編寫腳本統一舊有工具數據的分類欄位。
 
 ## 4. 總結
-今日完成了從「純內容維護」向「專業管理平台」演進的三大核心支柱：**稽核追蹤**、**高效搜索**與**精準權限**。系統現在具備了更強的擴展性與安全性，足以應對更大規模的數據維護與多人協作環境。
+今日解決了工具管理模組的架構漏洞與 UI 痛點。透過移除低 utility 的分類功能與引入滾動控制，系統在處理大量帳號資源時變得更加健壯且美觀。同時，修復了關鍵的認證與數據回寫錯誤，進一步提升了管理平台的專業性。
